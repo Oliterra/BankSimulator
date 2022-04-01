@@ -3,9 +3,9 @@ package edu.bank.dao.impl;
 import edu.bank.dao.IndividualRepository;
 import edu.bank.dao.LegalEntityRepository;
 import edu.bank.dao.UserRepository;
-import edu.bank.entity.Individual;
-import edu.bank.entity.LegalEntity;
-import edu.bank.entity.User;
+import edu.bank.model.entity.Individual;
+import edu.bank.model.entity.LegalEntity;
+import edu.bank.model.entity.User;
 import edu.bank.exeption.UnexpectedInternalError;
 
 import java.sql.PreparedStatement;
@@ -64,6 +64,22 @@ public class UserRepositoryImpl extends BaseRepository implements UserRepository
                     resultSet.getString("patronymic") != null) return true;
         } catch (Exception e) {
             throw new UnexpectedInternalError();
+        }
+        return false;
+    }
+
+    @Override
+    public boolean isUserBankClient(long bankId, long userId) {
+        try (PreparedStatement preparedStatement = connection.prepareStatement("SELECT COUNT(*) AS recordCount " +
+                "FROM banks_users WHERE bank_id=? AND user_id=?")) {
+            preparedStatement.setLong(1, bankId);
+            preparedStatement.setLong(2, userId);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            resultSet.next();
+            int recordCount = resultSet.getInt("recordCount");
+            if (recordCount > 0) return true;
+        } catch (Exception e) {
+            return false;
         }
         return false;
     }

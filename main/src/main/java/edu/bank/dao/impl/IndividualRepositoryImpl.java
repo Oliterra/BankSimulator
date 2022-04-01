@@ -1,7 +1,7 @@
 package edu.bank.dao.impl;
 
 import edu.bank.dao.IndividualRepository;
-import edu.bank.entity.Individual;
+import edu.bank.model.entity.Individual;
 import edu.bank.exeption.UnexpectedInternalError;
 
 import java.sql.PreparedStatement;
@@ -36,7 +36,6 @@ public class IndividualRepositoryImpl extends BaseRepository implements Individu
     public Individual getByPhone(String phone) {
         return getByAnyParamIfPresent("SELECT * FROM users WHERE phone=?", phone);
     }
-
 
     private Individual getByAnyParamIfPresent(String sql, Object criteria) {
         Individual individual = null;

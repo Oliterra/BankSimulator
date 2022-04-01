@@ -1,12 +1,14 @@
 package edu.bank.console;
 
-import edu.bank.enm.Command;
+import edu.bank.model.enm.Command;
 import edu.bank.exeption.UnexpectedInternalError;
 import edu.bank.service.AccountService;
 import edu.bank.service.BankService;
+import edu.bank.service.TransactionService;
 import edu.bank.service.UserService;
 import edu.bank.service.impl.AccountServiceImpl;
 import edu.bank.service.impl.BankServiceImpl;
+import edu.bank.service.impl.TransactionServiceImpl;
 import edu.bank.service.impl.UserServiceImpl;
 
 import java.io.BufferedReader;
@@ -21,6 +23,7 @@ public class ConsoleWorkerImpl implements ConsoleWorker {
     private final BankService bankService = new BankServiceImpl();
     private final UserService userService = new UserServiceImpl();
     private final AccountService accountService = new AccountServiceImpl();
+    private final TransactionService transactionService = new TransactionServiceImpl();
     private static final BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 
     @Override
@@ -40,8 +43,16 @@ public class ConsoleWorkerImpl implements ConsoleWorker {
         }
     }
 
+    private void showAllCommands() {
+        Arrays.stream(Command.values()).forEach(System.out::println);
+    }
+
     private void parseAndExecuteCommand(String fullCommand) throws IOException {
         String[] commandParts = fullCommand.split(" ");
+        if (commandParts[0].equals("help") && commandParts.length == 1) {
+            showAllCommands();
+            return;
+        }
         Command command = getCommandByName(commandParts[0]);
         Map<String, String> params = new HashMap<>();
         for (int i = 1; i < commandParts.length; i++) {
@@ -65,11 +76,12 @@ public class ConsoleWorkerImpl implements ConsoleWorker {
             case UPDATE_BANK -> bankService.updateBank(params);
             case CREATE_INDIVIDUAL -> userService.createIndividual(params);
             case CREATE_LEGAL_ENTITY -> userService.createLegalEntity(params);
+            case CREATE_ACCOUNT -> accountService.createNewAccount(params);
             case GET_USER_ACCOUNTS -> accountService.getAllByUser(params);
             case TRANSFER_MONEY -> accountService.transferMoney(params);
+            case GET_TRANSACTION_HISTORY -> transactionService.getTransactionHistory(params);
         }
     }
-
 
     private Command getCommandByName(String commandName) throws IOException {
         return Arrays.stream(Command.values())

@@ -1,6 +1,6 @@
 package edu.bank.dao;
 
-import edu.bank.entity.LegalEntity;
+import edu.bank.model.entity.LegalEntity;
 
 public interface LegalEntityRepository {
 

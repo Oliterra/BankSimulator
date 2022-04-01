@@ -2,14 +2,14 @@ package edu.bank.service.impl;
 
 import edu.bank.dao.BankRepository;
 import edu.bank.dao.impl.BankRepositoryImpl;
-import edu.bank.entity.Bank;
+import edu.bank.model.entity.Bank;
 import edu.bank.service.BankService;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.util.Map;
 
-import static edu.bank.enm.CommandParam.*;
+import static edu.bank.model.enm.CommandParam.*;
 
 public class BankServiceImpl implements BankService {
 

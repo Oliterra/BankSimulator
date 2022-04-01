@@ -1,6 +1,6 @@
-package edu.bank.entity;
+package edu.bank.model.entity;
 
-import edu.bank.enm.Currency;
+import edu.bank.model.enm.Currency;
 
 import java.time.LocalDate;
 

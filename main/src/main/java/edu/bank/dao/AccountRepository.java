@@ -1,7 +1,7 @@
 package edu.bank.dao;
 
-import edu.bank.enm.Currency;
-import edu.bank.entity.Account;
+import edu.bank.model.enm.Currency;
+import edu.bank.model.entity.Account;
 
 import java.util.List;
 

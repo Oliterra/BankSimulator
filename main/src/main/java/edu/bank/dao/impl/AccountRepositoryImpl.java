@@ -2,8 +2,8 @@ package edu.bank.dao.impl;
 
 import edu.bank.dao.AccountRepository;
 import edu.bank.dao.UserRepository;
-import edu.bank.enm.Currency;
-import edu.bank.entity.Account;
+import edu.bank.model.enm.Currency;
+import edu.bank.model.entity.Account;
 import edu.bank.exeption.UnexpectedInternalError;
 
 import java.sql.Date;
@@ -47,11 +47,7 @@ public class AccountRepositoryImpl extends BaseRepository implements AccountRepo
             account.setUser(userRepository.get(resultSet.getLong("user_id")));
             account.setCurrency(Currency.valueOf(resultSet.getString("currency")));
             account.setBalance(resultSet.getDouble("balance"));
-            Date registrationDate = resultSet.getDate("registration_date");
-            LocalDate localRegistrationDate = Instant.ofEpochMilli(registrationDate.getTime())
-                    .atZone(ZoneId.systemDefault())
-                    .toLocalDate();
-            account.setRegistrationDate(localRegistrationDate);
+            account.setRegistrationDate(resultSet.getDate("registration_date").toLocalDate());
             return account;
         } catch (Exception e) {
             return null;

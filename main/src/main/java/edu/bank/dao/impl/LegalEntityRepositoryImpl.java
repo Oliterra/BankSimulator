@@ -1,7 +1,7 @@
 package edu.bank.dao.impl;
 
 import edu.bank.dao.LegalEntityRepository;
-import edu.bank.entity.LegalEntity;
+import edu.bank.model.entity.LegalEntity;
 import edu.bank.exeption.UnexpectedInternalError;
 
 import java.sql.PreparedStatement;
@@ -51,7 +51,7 @@ public class LegalEntityRepositoryImpl extends BaseRepository implements LegalEn
             legalEntity.setPhone(resultSet.getString("phone"));
             return legalEntity;
         } catch (Exception e) {
-            throw new UnexpectedInternalError();
+            return null;
         }
     }
 }

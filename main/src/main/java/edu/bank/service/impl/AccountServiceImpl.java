@@ -6,11 +6,11 @@ import edu.bank.dao.UserRepository;
 import edu.bank.dao.impl.AccountRepositoryImpl;
 import edu.bank.dao.impl.BankRepositoryImpl;
 import edu.bank.dao.impl.UserRepositoryImpl;
-import edu.bank.dto.AccountMainInfoDTO;
-import edu.bank.enm.Currency;
-import edu.bank.entity.Account;
-import edu.bank.entity.Bank;
-import edu.bank.entity.Transaction;
+import edu.bank.model.dto.AccountMainInfoDTO;
+import edu.bank.model.enm.Currency;
+import edu.bank.model.entity.Account;
+import edu.bank.model.entity.Bank;
+import edu.bank.model.entity.Transaction;
 import edu.bank.exeption.UnexpectedInternalError;
 import edu.bank.service.AccountService;
 import edu.bank.service.TransactionService;
@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static edu.bank.enm.CommandParam.*;
+import static edu.bank.model.enm.CommandParam.*;
 
 public class AccountServiceImpl implements AccountService {
 
@@ -31,10 +31,42 @@ public class AccountServiceImpl implements AccountService {
     private final TransactionService transactionService = new TransactionServiceImpl();
     private static final String IBAN_START_STRING = "BY";
     private static final String USER_ID_PARAM = USER_ID.getParamName();
+    private static final String BANK_ID_PARAM = BANK_ID.getParamName();
     private static final String ACCOUNT_CURRENCY_PARAM = ACCOUNT_CURRENCY.getParamName();
     private static final String FROM_ACCOUNT_PARAM = FROM_ACCOUNT.getParamName();
     private static final String TO_ACCOUNT_PARAM = TO_ACCOUNT.getParamName();
     private static final String MONEY_AMOUNT_PARAM = MONEY_AMOUNT.getParamName();
+
+    @Override
+    public void createNewAccount(Map<String, String> accountInfo) throws IOException {
+        if (!accountInfo.containsKey(USER_ID_PARAM) || !accountInfo.containsKey(BANK_ID_PARAM)) {
+            System.out.println("Bank or user id is missing");
+            return;
+        }
+        long bankId = Long.parseLong(accountInfo.get(BANK_ID_PARAM));
+        long userId = Long.parseLong(accountInfo.get(USER_ID_PARAM));
+        if (!userRepository.isUserBankClient(bankId, userId)) {
+            System.out.println("The user is not a customer of the bank");
+            return;
+        }
+        Currency currency = null;
+        if (accountInfo.containsKey(ACCOUNT_CURRENCY_PARAM)) {
+            try {
+                currency = Currency.valueOf(accountInfo.get(ACCOUNT_CURRENCY_PARAM));
+            } catch (IllegalArgumentException e) {
+                System.out.println("Invalid currency format");
+                return;
+            }
+        }
+        Account account = new Account();
+        account.setBalance(0);
+        account.setUser(userRepository.get(userId));
+        account.setCurrency(currency);
+        account.setRegistrationDate(LocalDate.now());
+        String newIban = generateIban(bankId);
+        account.setIban(newIban);
+        accountRepository.create(account);
+    }
 
     @Override
     public Account getDefaultAccountForNewUser(long bankId, long userId) throws IOException {
@@ -80,6 +112,10 @@ public class AccountServiceImpl implements AccountService {
     private void makeIntrabankTransfer(String fromAccountIban, String toAccountIban, double sum) {
         Account fromAccount = accountRepository.get(fromAccountIban);
         Account toAccount = accountRepository.get(toAccountIban);
+        if (fromAccount == null || fromAccount == null) {
+            System.out.println("Invalid IBAN");
+            return;
+        }
         if (!fromAccount.getCurrency().equals(toAccount.getCurrency())) {
             System.out.println("The function of transferring between different currencies is still under development.");
             return;

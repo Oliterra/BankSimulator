@@ -1,6 +1,6 @@
 package edu.bank.dao;
 
-import edu.bank.entity.User;
+import edu.bank.model.entity.User;
 
 public interface UserRepository {
 
@@ -9,4 +9,6 @@ public interface UserRepository {
     User get(long id);
 
     boolean isIndividual(long id);
+
+    boolean isUserBankClient(long bankId, long userId);
 }

@@ -1,4 +1,4 @@
-package edu.bank.entity;
+package edu.bank.model.entity;
 
 import java.time.LocalDate;
 import java.time.LocalTime;

@@ -1,4 +1,4 @@
-package edu.bank.entity;
+package edu.bank.model.entity;
 
 public class User {
 

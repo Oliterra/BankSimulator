@@ -8,9 +8,9 @@ import edu.bank.dao.impl.AccountRepositoryImpl;
 import edu.bank.dao.impl.IndividualRepositoryImpl;
 import edu.bank.dao.impl.LegalEntityRepositoryImpl;
 import edu.bank.dao.impl.UserRepositoryImpl;
-import edu.bank.entity.Individual;
-import edu.bank.entity.LegalEntity;
-import edu.bank.entity.User;
+import edu.bank.model.entity.Individual;
+import edu.bank.model.entity.LegalEntity;
+import edu.bank.model.entity.User;
 import edu.bank.service.AccountService;
 import edu.bank.service.UserService;
 import org.apache.log4j.Logger;
@@ -18,7 +18,7 @@ import org.apache.log4j.Logger;
 import java.io.IOException;
 import java.util.Map;
 
-import static edu.bank.enm.CommandParam.*;
+import static edu.bank.model.enm.CommandParam.*;
 
 public class UserServiceImpl implements UserService {
 

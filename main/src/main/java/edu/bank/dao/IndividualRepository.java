@@ -1,6 +1,6 @@
 package edu.bank.dao;
 
-import edu.bank.entity.Individual;
+import edu.bank.model.entity.Individual;
 
 public interface IndividualRepository {
 

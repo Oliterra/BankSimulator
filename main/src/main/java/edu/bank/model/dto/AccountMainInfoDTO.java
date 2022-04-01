@@ -1,6 +1,6 @@
-package edu.bank.dto;
+package edu.bank.model.dto;
 
-import edu.bank.enm.Currency;
+import edu.bank.model.enm.Currency;
 
 public class AccountMainInfoDTO {
 

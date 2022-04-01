@@ -1,14 +1,12 @@
-package edu.bank.enm;
+package edu.bank.model.enm;
 
 public enum Currency {
     CHF,
-    KWD,
-    BHD,
-    OMR,
     JPY,
     GBP,
     EUR,
     USD,
-    SEK,
-    AUD;
+    AUD,
+    RUS,
+    BYN;
 }

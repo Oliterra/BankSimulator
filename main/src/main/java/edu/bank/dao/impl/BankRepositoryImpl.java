@@ -1,7 +1,7 @@
 package edu.bank.dao.impl;
 
 import edu.bank.dao.BankRepository;
-import edu.bank.entity.Bank;
+import edu.bank.model.entity.Bank;
 import edu.bank.exeption.UnexpectedInternalError;
 
 import java.sql.PreparedStatement;
@@ -66,7 +66,7 @@ public class BankRepositoryImpl extends BaseRepository implements BankRepository
     }
 
     private Bank getByAnyParamIfPresent(String sql, Object criteria) {
-        Bank bank = null;
+        Bank bank;
         try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
             if (criteria instanceof Long) preparedStatement.setLong(1, (long) criteria);
             if (criteria instanceof String) preparedStatement.setString(1, (String) criteria);
@@ -80,7 +80,7 @@ public class BankRepositoryImpl extends BaseRepository implements BankRepository
             bank.setLegalEntitiesFee(resultSet.getDouble("legal_entities_fee"));
             return bank;
         } catch (Exception e) {
-            throw new UnexpectedInternalError();
+            return null;
         }
     }
 }

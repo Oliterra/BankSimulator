@@ -1,12 +1,19 @@
 package edu.bank.dao.impl;
 
+import edu.bank.dao.AccountRepository;
 import edu.bank.dao.TransactionRepository;
-import edu.bank.entity.Transaction;
+import edu.bank.model.entity.Transaction;
 import edu.bank.exeption.UnexpectedInternalError;
 
 import java.sql.*;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class TransactionRepositoryImpl extends BaseRepository implements TransactionRepository {
+
+    private final AccountRepository accountRepository = new AccountRepositoryImpl();
 
     @Override
     public Transaction create(Transaction transaction) {
@@ -25,5 +32,30 @@ public class TransactionRepositoryImpl extends BaseRepository implements Transac
             throw new UnexpectedInternalError();
         }
         return transaction;
+    }
+
+    @Override
+    public List<Transaction> getAllBetweenDates(LocalDate fromDate, LocalDate toDate) {
+        List<Transaction> transactions = new ArrayList<>();
+        try (PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM transactions WHERE " +
+                "date BETWEEN ? AND ?")) {
+            preparedStatement.setDate(1, Date.valueOf(fromDate));
+            preparedStatement.setDate(2, Date.valueOf(toDate));
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                Transaction transaction = new Transaction();
+                transaction.setId(resultSet.getLong("id"));
+                transaction.setRecipientAccount(accountRepository.get(resultSet.getString("recipient_account")));
+                transaction.setSenderAccount(accountRepository.get(resultSet.getString("sender_account")));
+                transaction.setFee(resultSet.getDouble("fee"));
+                transaction.setDate(resultSet.getDate("date").toLocalDate());
+                transaction.setFullSum(resultSet.getDouble("full_sum"));
+                transaction.setTime(resultSet.getTime("time").toLocalTime());
+                transactions.add(transaction);
+            }
+            return transactions;
+        } catch (Exception e) {
+            return Collections.emptyList();
+        }
     }
 }
