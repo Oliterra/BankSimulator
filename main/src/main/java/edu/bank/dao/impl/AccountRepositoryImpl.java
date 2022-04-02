@@ -2,17 +2,14 @@ package edu.bank.dao.impl;
 
 import edu.bank.dao.AccountRepository;
 import edu.bank.dao.UserRepository;
+import edu.bank.exeption.DAOException;
 import edu.bank.model.enm.Currency;
 import edu.bank.model.entity.Account;
-import edu.bank.exeption.UnexpectedInternalError;
 
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -32,23 +29,17 @@ public class AccountRepositoryImpl extends BaseRepository implements AccountRepo
             preparedStatement.setDate(5, Date.valueOf(account.getRegistrationDate()));
             preparedStatement.executeUpdate();
         } catch (Exception e) {
-            throw new UnexpectedInternalError();
+            throw new DAOException();
         }
     }
 
     @Override
     public Account get(String iban) {
-        Account account = new Account();
         try (PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM accounts WHERE iban=?")) {
             preparedStatement.setString(1, iban);
             ResultSet resultSet = preparedStatement.executeQuery();
             resultSet.next();
-            account.setIban(resultSet.getString("iban"));
-            account.setUser(userRepository.get(resultSet.getLong("user_id")));
-            account.setCurrency(Currency.valueOf(resultSet.getString("currency")));
-            account.setBalance(resultSet.getDouble("balance"));
-            account.setRegistrationDate(resultSet.getDate("registration_date").toLocalDate());
-            return account;
+            return doGetMapping(resultSet);
         } catch (Exception e) {
             return null;
         }
@@ -60,16 +51,7 @@ public class AccountRepositoryImpl extends BaseRepository implements AccountRepo
         try (PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM accounts")) {
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
-                Account account = new Account();
-                account.setIban(resultSet.getString("iban"));
-                account.setUser(userRepository.get(resultSet.getLong("user_id")));
-                account.setCurrency(Currency.valueOf(resultSet.getString("currency")));
-                account.setBalance(resultSet.getDouble("balance"));
-                Date registrationDate = resultSet.getDate("registration_date");
-                LocalDate localRegistrationDate = Instant.ofEpochMilli(registrationDate.getTime())
-                        .atZone(ZoneId.systemDefault())
-                        .toLocalDate();
-                account.setRegistrationDate(localRegistrationDate);
+                Account account = doGetMapping(resultSet);
                 accounts.add(account);
             }
             return accounts;
@@ -85,16 +67,7 @@ public class AccountRepositoryImpl extends BaseRepository implements AccountRepo
             preparedStatement.setLong(1, userId);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
-                Account account = new Account();
-                account.setIban(resultSet.getString("iban"));
-                account.setUser(userRepository.get(resultSet.getLong("user_id")));
-                account.setCurrency(Currency.valueOf(resultSet.getString("currency")));
-                account.setBalance(resultSet.getDouble("balance"));
-                Date registrationDate = resultSet.getDate("registration_date");
-                LocalDate localRegistrationDate = Instant.ofEpochMilli(registrationDate.getTime())
-                        .atZone(ZoneId.systemDefault())
-                        .toLocalDate();
-                account.setRegistrationDate(localRegistrationDate);
+                Account account = doGetMapping(resultSet);
                 accounts.add(account);
             }
             return accounts;
@@ -111,21 +84,26 @@ public class AccountRepositoryImpl extends BaseRepository implements AccountRepo
             preparedStatement.setString(2, currency.toString());
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
-                Account account = new Account();
-                account.setIban(resultSet.getString("iban"));
-                account.setUser(userRepository.get(resultSet.getLong("user_id")));
-                account.setCurrency(Currency.valueOf(resultSet.getString("currency")));
-                account.setBalance(resultSet.getDouble("balance"));
-                Date registrationDate = resultSet.getDate("registration_date");
-                LocalDate localRegistrationDate = Instant.ofEpochMilli(registrationDate.getTime())
-                        .atZone(ZoneId.systemDefault())
-                        .toLocalDate();
-                account.setRegistrationDate(localRegistrationDate);
+                Account account = doGetMapping(resultSet);
                 accounts.add(account);
             }
             return accounts;
         } catch (Exception e) {
             return Collections.emptyList();
+        }
+    }
+
+    private Account doGetMapping(ResultSet resultSet) {
+        try {
+            Account account = new Account();
+            account.setIban(resultSet.getString("iban"));
+            account.setUser(userRepository.get(resultSet.getLong("user_id")));
+            account.setCurrency(Currency.valueOf(resultSet.getString("currency")));
+            account.setBalance(resultSet.getDouble("balance"));
+            account.setRegistrationDate(resultSet.getDate("registration_date").toLocalDate());
+            return account;
+        } catch (Exception e) {
+            throw new DAOException();
         }
     }
 
@@ -144,18 +122,23 @@ public class AccountRepositoryImpl extends BaseRepository implements AccountRepo
     @Override
     public void transferMoney(String fromAccountIban, String toAccountIban, double newFromAccountBalance, double newToAccountBalance) {
         try {
-            try {
-                connection.setAutoCommit(false);
-                updateBalance(fromAccountIban, newFromAccountBalance);
-                updateBalance(toAccountIban, newToAccountBalance);
-                connection.commit();
-            } catch (Exception e) {
-                connection.rollback();
-            } finally {
-                connection.setAutoCommit(true);
-            }
+            transferMoneyTransactional(fromAccountIban, toAccountIban, newFromAccountBalance, newToAccountBalance);
         } catch (SQLException e) {
-            throw new UnexpectedInternalError();
+            throw new DAOException();
+        }
+    }
+
+    private void transferMoneyTransactional(String fromAccountIban, String toAccountIban, double newFromAccountBalance,
+                                            double newToAccountBalance) throws SQLException {
+        try {
+            connection.setAutoCommit(false);
+            updateBalance(fromAccountIban, newFromAccountBalance);
+            updateBalance(toAccountIban, newToAccountBalance);
+            connection.commit();
+        } catch (Exception e) {
+            connection.rollback();
+        } finally {
+            connection.setAutoCommit(true);
         }
     }
 
@@ -165,7 +148,7 @@ public class AccountRepositoryImpl extends BaseRepository implements AccountRepo
             preparedStatement.setString(2, iban);
             preparedStatement.executeUpdate();
         } catch (Exception e) {
-            throw new UnexpectedInternalError();
+            throw new DAOException();
         }
     }
 }

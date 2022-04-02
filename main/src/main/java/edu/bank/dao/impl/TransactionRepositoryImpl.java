@@ -2,8 +2,8 @@ package edu.bank.dao.impl;
 
 import edu.bank.dao.AccountRepository;
 import edu.bank.dao.TransactionRepository;
+import edu.bank.exeption.DAOException;
 import edu.bank.model.entity.Transaction;
-import edu.bank.exeption.UnexpectedInternalError;
 
 import java.sql.*;
 import java.time.LocalDate;
@@ -29,7 +29,7 @@ public class TransactionRepositoryImpl extends BaseRepository implements Transac
             ResultSet resultSet = preparedStatement.getGeneratedKeys();
             if (resultSet.next()) transaction.setId(resultSet.getLong(1));
         } catch (Exception e) {
-            throw new UnexpectedInternalError();
+            throw new DAOException();
         }
         return transaction;
     }
@@ -43,19 +43,28 @@ public class TransactionRepositoryImpl extends BaseRepository implements Transac
             preparedStatement.setDate(2, Date.valueOf(toDate));
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
-                Transaction transaction = new Transaction();
-                transaction.setId(resultSet.getLong("id"));
-                transaction.setRecipientAccount(accountRepository.get(resultSet.getString("recipient_account")));
-                transaction.setSenderAccount(accountRepository.get(resultSet.getString("sender_account")));
-                transaction.setFee(resultSet.getDouble("fee"));
-                transaction.setDate(resultSet.getDate("date").toLocalDate());
-                transaction.setFullSum(resultSet.getDouble("full_sum"));
-                transaction.setTime(resultSet.getTime("time").toLocalTime());
+                Transaction transaction = doGetMapping(resultSet);
                 transactions.add(transaction);
             }
             return transactions;
         } catch (Exception e) {
             return Collections.emptyList();
+        }
+    }
+
+    private Transaction doGetMapping(ResultSet resultSet) {
+        try {
+            Transaction transaction = new Transaction();
+            transaction.setId(resultSet.getLong("id"));
+            transaction.setRecipientAccount(accountRepository.get(resultSet.getString("recipient_account")));
+            transaction.setSenderAccount(accountRepository.get(resultSet.getString("sender_account")));
+            transaction.setFee(resultSet.getDouble("fee"));
+            transaction.setDate(resultSet.getDate("date").toLocalDate());
+            transaction.setFullSum(resultSet.getDouble("full_sum"));
+            transaction.setTime(resultSet.getTime("time").toLocalTime());
+            return transaction;
+        } catch (Exception e) {
+            throw new DAOException();
         }
     }
 }

@@ -11,7 +11,7 @@ import edu.bank.model.enm.Currency;
 import edu.bank.model.entity.Account;
 import edu.bank.model.entity.Bank;
 import edu.bank.model.entity.Transaction;
-import edu.bank.exeption.UnexpectedInternalError;
+import edu.bank.exeption.DAOException;
 import edu.bank.service.AccountService;
 import edu.bank.service.TransactionService;
 
@@ -142,8 +142,8 @@ public class AccountServiceImpl implements AccountService {
             return;
         }
         double fee;
-        fee = (userRepository.isIndividual(fromAccount.getUser().getId())) ? bank.getIndividualsFee() : bank.getLegalEntitiesFee();
-        if (fee <= 0 || fee > 1) throw new UnexpectedInternalError();
+        fee = (userRepository.isUserIndividual(fromAccount.getUser().getId())) ? bank.getIndividualsFee() : bank.getLegalEntitiesFee();
+        if (fee <= 0 || fee > 1) throw new DAOException();
         double sumWithFee = (sum * fee) + sum;
         double fromAccountBalance = fromAccount.getBalance();
         if (fromAccountBalance < sumWithFee) {

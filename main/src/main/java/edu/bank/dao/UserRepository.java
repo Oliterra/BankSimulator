@@ -8,7 +8,11 @@ public interface UserRepository {
 
     User get(long id);
 
-    boolean isIndividual(long id);
+    void update(boolean isUserIndividual, long id, User user);
+
+    void delete(long id);
+
+    boolean isUserIndividual(long id);
 
     boolean isUserBankClient(long bankId, long userId);
 }

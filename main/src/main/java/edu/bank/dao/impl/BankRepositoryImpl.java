@@ -1,11 +1,15 @@
 package edu.bank.dao.impl;
 
 import edu.bank.dao.BankRepository;
+import edu.bank.exeption.DAOException;
 import edu.bank.model.entity.Bank;
-import edu.bank.exeption.UnexpectedInternalError;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class BankRepositoryImpl extends BaseRepository implements BankRepository {
 
@@ -19,7 +23,21 @@ public class BankRepositoryImpl extends BaseRepository implements BankRepository
             preparedStatement.setDouble(4, bank.getLegalEntitiesFee());
             preparedStatement.executeUpdate();
         } catch (Exception e) {
-            throw new UnexpectedInternalError();
+            throw new DAOException();
+        }
+    }
+
+    @Override
+    public List<Bank> getAll() {
+        List<Bank> banks = new ArrayList<>();
+        try (PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM banks")) {
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                banks.add(doGetMapping(resultSet));
+            }
+            return banks;
+        } catch (Exception e) {
+            return Collections.emptyList();
         }
     }
 
@@ -46,7 +64,7 @@ public class BankRepositoryImpl extends BaseRepository implements BankRepository
             resultSet.next();
             return resultSet.getString("iban_prefix");
         } catch (Exception e) {
-            throw new UnexpectedInternalError();
+            throw new DAOException();
         }
     }
 
@@ -61,18 +79,65 @@ public class BankRepositoryImpl extends BaseRepository implements BankRepository
             preparedStatement.setLong(5, id);
             preparedStatement.executeUpdate();
         } catch (Exception e) {
-            throw new UnexpectedInternalError();
+            throw new DAOException();
+        }
+    }
+
+    @Override
+    public void delete(long id) {
+        try {
+            deleteCascade(id);
+        } catch (SQLException e) {
+            throw new DAOException();
         }
     }
 
     private Bank getByAnyParamIfPresent(String sql, Object criteria) {
-        Bank bank;
         try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
             if (criteria instanceof Long) preparedStatement.setLong(1, (long) criteria);
             if (criteria instanceof String) preparedStatement.setString(1, (String) criteria);
             ResultSet resultSet = preparedStatement.executeQuery();
             resultSet.next();
-            bank = new Bank();
+            return doGetMapping(resultSet);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private void deleteCascade(long id) throws SQLException {
+        try {
+            connection.setAutoCommit(false);
+            deleteBankUsers(id);
+            deleteBankFromBanks(id);
+            connection.commit();
+        } catch (Exception e) {
+            connection.rollback();
+        } finally {
+            connection.setAutoCommit(true);
+        }
+    }
+
+    private void deleteBankUsers(long id) {
+        try (PreparedStatement preparedStatement = connection.prepareStatement("DELETE FROM banks_users WHERE bank_id=?")) {
+            preparedStatement.setLong(1, id);
+            preparedStatement.executeUpdate();
+        } catch (Exception e) {
+            throw new DAOException();
+        }
+    }
+
+    private void deleteBankFromBanks(long id) {
+        try (PreparedStatement preparedStatement = connection.prepareStatement("DELETE FROM banks WHERE id=?")) {
+            preparedStatement.setLong(1, id);
+            preparedStatement.executeUpdate();
+        } catch (Exception e) {
+            throw new DAOException();
+        }
+    }
+
+    private Bank doGetMapping(ResultSet resultSet) {
+        try {
+            Bank bank = new Bank();
             bank.setId(resultSet.getLong("id"));
             bank.setName(resultSet.getString("name"));
             bank.setIbanPrefix(resultSet.getString("iban_prefix"));
@@ -80,7 +145,7 @@ public class BankRepositoryImpl extends BaseRepository implements BankRepository
             bank.setLegalEntitiesFee(resultSet.getDouble("legal_entities_fee"));
             return bank;
         } catch (Exception e) {
-            return null;
+            throw new DAOException();
         }
     }
 }

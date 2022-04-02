@@ -20,4 +20,12 @@ public class Individual extends User {
     public void setPatronymic(String patronymic) {
         this.patronymic = patronymic;
     }
+
+    @Override
+    public String toString() {
+        return "Individual{" +
+                "lastName='" + lastName + '\'' +
+                ", patronymic='" + patronymic + '\'' +
+                "} " + super.toString();
+    }
 }

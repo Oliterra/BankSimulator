@@ -1,7 +1,7 @@
 package edu.bank.console;
 
+import edu.bank.exeption.DAOException;
 import edu.bank.model.enm.Command;
-import edu.bank.exeption.UnexpectedInternalError;
 import edu.bank.service.AccountService;
 import edu.bank.service.BankService;
 import edu.bank.service.TransactionService;
@@ -37,14 +37,12 @@ public class ConsoleWorkerImpl implements ConsoleWorker {
                 parseAndExecuteCommand(command);
             } catch (IOException e) {
                 System.out.println("Invalid command format. To view all commands use \"help\"");
-            } catch (UnexpectedInternalError e) {
+            } catch (DAOException e) {
                 System.out.println("Sorry, an internal error has occurred. Try again later");
+            } catch (Exception e) {
+                System.out.println("Sorry, something went wrong");
             }
         }
-    }
-
-    private void showAllCommands() {
-        Arrays.stream(Command.values()).forEach(System.out::println);
     }
 
     private void parseAndExecuteCommand(String fullCommand) throws IOException {
@@ -54,6 +52,11 @@ public class ConsoleWorkerImpl implements ConsoleWorker {
             return;
         }
         Command command = getCommandByName(commandParts[0]);
+        Map<String, String> commandParams = getCommandParams(command, commandParts);
+        executeCommand(command, commandParams);
+    }
+
+    private Map<String, String> getCommandParams(Command command, String[] commandParts) throws IOException {
         Map<String, String> params = new HashMap<>();
         for (int i = 1; i < commandParts.length; i++) {
             String paramAndValue = commandParts[i];
@@ -67,7 +70,7 @@ public class ConsoleWorkerImpl implements ConsoleWorker {
             if (!params.containsKey(param)) params.put(param, value);
             else throw new IOException();
         }
-        executeCommand(command, params);
+        return params;
     }
 
     private void executeCommand(Command command, Map<String, String> params) throws IOException, NumberFormatException {
@@ -81,6 +84,10 @@ public class ConsoleWorkerImpl implements ConsoleWorker {
             case TRANSFER_MONEY -> accountService.transferMoney(params);
             case GET_TRANSACTION_HISTORY -> transactionService.getTransactionHistory(params);
         }
+    }
+
+    private void showAllCommands() {
+        Arrays.stream(Command.values()).forEach(System.out::println);
     }
 
     private Command getCommandByName(String commandName) throws IOException {

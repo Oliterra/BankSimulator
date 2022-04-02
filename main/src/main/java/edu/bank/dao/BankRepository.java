@@ -2,9 +2,13 @@ package edu.bank.dao;
 
 import edu.bank.model.entity.Bank;
 
+import java.util.List;
+
 public interface BankRepository {
 
     void create(Bank bank);
+
+    List<Bank> getAll();
 
     Bank get(long id);
 
@@ -15,4 +19,6 @@ public interface BankRepository {
     String getIbanPrefixById(long id);
 
     void update(long id, Bank bank);
+
+    void delete(long id);
 }
