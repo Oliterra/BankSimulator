@@ -21,4 +21,8 @@ public interface BankRepository {
     void update(long id, Bank bank);
 
     void delete(long id);
+
+    boolean isExists(long id);
+
+    int getUsersCount(long id);
 }

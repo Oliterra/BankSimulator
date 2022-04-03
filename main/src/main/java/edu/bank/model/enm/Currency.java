@@ -7,6 +7,6 @@ public enum Currency {
     EUR,
     USD,
     AUD,
-    RUS,
+    RUB,
     BYN;
 }

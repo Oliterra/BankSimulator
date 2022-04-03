@@ -20,76 +20,76 @@ public class TransactionInfoDTO {
         return id;
     }
 
-    public String getRecipientIban() {
-        return recipientIban;
-    }
-
-    public String getSenderIban() {
-        return senderIban;
-    }
-
-    public String getRecipientBankName() {
-        return recipientBankName;
-    }
-
-    public String getCurrency() {
-        return currency;
-    }
-
-    public double getSum() {
-        return sum;
-    }
-
-    public double getFee() {
-        return fee;
-    }
-
-    public double getFullSum() {
-        return fullSum;
-    }
-
-    public LocalDate getDate() {
-        return date;
-    }
-
-    public LocalTime getTime() {
-        return time;
-    }
-
     public void setId(long id) {
         this.id = id;
+    }
+
+    public String getRecipientIban() {
+        return recipientIban;
     }
 
     public void setRecipientIban(String recipientIban) {
         this.recipientIban = recipientIban;
     }
 
+    public String getSenderIban() {
+        return senderIban;
+    }
+
     public void setSenderIban(String senderIban) {
         this.senderIban = senderIban;
+    }
+
+    public String getRecipientBankName() {
+        return recipientBankName;
     }
 
     public void setRecipientBankName(String recipientBankName) {
         this.recipientBankName = recipientBankName;
     }
 
+    public String getCurrency() {
+        return currency;
+    }
+
     public void setCurrency(String currency) {
         this.currency = currency;
+    }
+
+    public double getSum() {
+        return sum;
     }
 
     public void setSum(double sum) {
         this.sum = sum;
     }
 
+    public double getFee() {
+        return fee;
+    }
+
     public void setFee(double fee) {
         this.fee = fee;
+    }
+
+    public double getFullSum() {
+        return fullSum;
     }
 
     public void setFullSum(double fullSum) {
         this.fullSum = fullSum;
     }
 
+    public LocalDate getDate() {
+        return date;
+    }
+
     public void setDate(LocalDate date) {
         this.date = date;
+    }
+
+    public LocalTime getTime() {
+        return time;
     }
 
     public void setTime(LocalTime time) {
@@ -99,15 +99,15 @@ public class TransactionInfoDTO {
     @Override
     public String toString() {
         return "Transaction information{" + "\n" +
-                "id:" + id + "\n" +
-                "recipient IBAN: " + recipientIban + "\n" +
-                "sender IBAN: " + senderIban + "\n" +
-                "recipient bank: " + recipientBankName + "\n" +
-                "currency: " + currency + "\n" +
-                "money amount: " + sum + "\n" +
-                "transfer fee: " + fee + "\n" +
-                "full money amount: " + fullSum + "\n" +
-                "date: " + date + "\n" +
-                "time: " + time + "\n";
+                "ID:" + id + "\n" +
+                "Recipient IBAN: " + recipientIban + "\n" +
+                "Sender IBAN: " + senderIban + "\n" +
+                "Recipient bank: " + recipientBankName + "\n" +
+                "Currency: " + currency + "\n" +
+                "Money amount: " + sum + "\n" +
+                "Transfer fee: " + fee + "\n" +
+                "Full money amount: " + fullSum + "\n" +
+                "Date: " + date + "\n" +
+                "Time: " + time + "\n";
     }
 }

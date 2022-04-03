@@ -6,13 +6,13 @@ public class AccountMainInfoDTO {
 
     private String iban;
     private Currency currency;
-    private double amount;
+    private double balance;
     private String bankName;
 
-    public AccountMainInfoDTO(String iban, Currency currency, double amount, String bankName) {
+    public AccountMainInfoDTO(String iban, Currency currency, double balance, String bankName) {
         this.iban = iban;
         this.currency = currency;
-        this.amount = amount;
+        this.balance = balance;
         this.bankName = bankName;
     }
 
@@ -20,32 +20,40 @@ public class AccountMainInfoDTO {
         return iban;
     }
 
-    public Currency getCurrency() {
-        return currency;
-    }
-
-    public double getAmount() {
-        return amount;
-    }
-
     public void setIban(String iban) {
         this.iban = iban;
+    }
+
+    public Currency getCurrency() {
+        return currency;
     }
 
     public void setCurrency(Currency currency) {
         this.currency = currency;
     }
 
-    public void setAmount(double amount) {
-        this.amount = amount;
+    public double getBalance() {
+        return balance;
+    }
+
+    public void setBalance(double balance) {
+        this.balance = balance;
+    }
+
+    public String getBankName() {
+        return bankName;
+    }
+
+    public void setBankName(String bankName) {
+        this.bankName = bankName;
     }
 
     @Override
     public String toString() {
         return "Account info: " +
-                "bank=" + bankName +
-                ", currency=" + currency +
-                ", amount=" + amount +
-                ", iban=" + iban;
+                "Bank: " + bankName + ", " +
+                "Currency: " + currency + ", " +
+                "Balance: " + balance + ", " +
+                "IBAN: " + iban;
     }
 }

@@ -92,6 +92,33 @@ public class BankRepositoryImpl extends BaseRepository implements BankRepository
         }
     }
 
+    @Override
+    public boolean isExists(long id) {
+        try (PreparedStatement preparedStatement = connection.prepareStatement("SELECT COUNT(*) AS recordCount " +
+                "FROM banks WHERE id=?")) {
+            preparedStatement.setLong(1, id);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            resultSet.next();
+            int recordCount = resultSet.getInt("recordCount");
+            return recordCount > 0;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    @Override
+    public int getUsersCount(long id) {
+        try (PreparedStatement preparedStatement = connection.prepareStatement("SELECT COUNT(*) AS recordCount " +
+                "FROM banks_users WHERE bank_id=?")) {
+            preparedStatement.setLong(1, id);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            resultSet.next();
+            return resultSet.getInt("recordCount");
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
     private Bank getByAnyParamIfPresent(String sql, Object criteria) {
         try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
             if (criteria instanceof Long) preparedStatement.setLong(1, (long) criteria);

@@ -19,5 +19,9 @@ public interface AccountRepository {
 
     double getBalanceByIban(String iban);
 
+    void delete(String iban);
+
+    boolean isExists(String iban);
+
     void transferMoney(String fromAccountIban, String toAccountIban, double newFromAccountBalance, double newToAccountBalance);
 }

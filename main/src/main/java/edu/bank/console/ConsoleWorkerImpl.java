@@ -1,30 +1,28 @@
 package edu.bank.console;
 
+import edu.bank.exeption.BusinessLogicException;
 import edu.bank.exeption.DAOException;
 import edu.bank.model.enm.Command;
-import edu.bank.service.AccountService;
-import edu.bank.service.BankService;
-import edu.bank.service.TransactionService;
-import edu.bank.service.UserService;
+import edu.bank.service.*;
 import edu.bank.service.impl.AccountServiceImpl;
 import edu.bank.service.impl.BankServiceImpl;
 import edu.bank.service.impl.TransactionServiceImpl;
 import edu.bank.service.impl.UserServiceImpl;
+import org.apache.log4j.Logger;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
 
-public class ConsoleWorkerImpl implements ConsoleWorker {
+public class ConsoleWorkerImpl implements ConsoleWorker, CommandManager {
 
     private final BankService bankService = new BankServiceImpl();
     private final UserService userService = new UserServiceImpl();
     private final AccountService accountService = new AccountServiceImpl();
     private final TransactionService transactionService = new TransactionServiceImpl();
     private static final BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+    private static final Logger log = Logger.getLogger(ConsoleWorkerImpl.class);
 
     @Override
     public void simulateBankOperations() {
@@ -37,10 +35,20 @@ public class ConsoleWorkerImpl implements ConsoleWorker {
                 parseAndExecuteCommand(command);
             } catch (IOException e) {
                 System.out.println("Invalid command format. To view all commands use \"help\"");
+                log.error("An error occurred while reading the data: " + e.getMessage());
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid data format");
+                log.error("An error occurred while reading the data: " + e.getMessage());
             } catch (DAOException e) {
                 System.out.println("Sorry, an internal error has occurred. Try again later");
+                log.error("An error occurred while working with the database: " + e.getMessage());
+            } catch (BusinessLogicException e) {
+                String message = e.getMessage();
+                System.out.println(message);
+                log.error("A business logic error has occurred: " + message);
             } catch (Exception e) {
-                System.out.println("Sorry, something went wrong");
+                System.out.println("Sorry, an internal error has occurred. Try again later");
+                log.error("A error has occurred: " + e.getMessage());
             }
         }
     }
@@ -56,49 +64,27 @@ public class ConsoleWorkerImpl implements ConsoleWorker {
         executeCommand(command, commandParams);
     }
 
-    private Map<String, String> getCommandParams(Command command, String[] commandParts) throws IOException {
-        Map<String, String> params = new HashMap<>();
-        for (int i = 1; i < commandParts.length; i++) {
-            String paramAndValue = commandParts[i];
-            if (!paramAndValue.startsWith("-") || !paramAndValue.contains("=") || paramAndValue.endsWith("="))
-                throw new IOException();
-            String[] splittedParamAndValue = paramAndValue.split("=");
-            if (splittedParamAndValue.length != 2) throw new IOException();
-            String param = splittedParamAndValue[0].substring(1);
-            String value = splittedParamAndValue[1];
-            if (!isCommandParamsValid(command, param)) throw new IOException();
-            if (!params.containsKey(param)) params.put(param, value);
-            else throw new IOException();
-        }
-        return params;
-    }
-
-    private void executeCommand(Command command, Map<String, String> params) throws IOException, NumberFormatException {
+    private void executeCommand(Command command, Map<String, String> params) {
         switch (command) {
             case CREATE_BANK -> bankService.createBank(params);
+            case GET_ALL_BANKS -> bankService.getAllBanks(params);
+            case GET_BANK -> bankService.getBank(params);
             case UPDATE_BANK -> bankService.updateBank(params);
+            case DELETE_BANK -> bankService.deleteBank(params);
             case CREATE_INDIVIDUAL -> userService.createIndividual(params);
+            case GET_ALL_INDIVIDUALS -> userService.getAllIndividuals(params);
+            case GET_INDIVIDUAL -> userService.getIndividual(params);
+            case UPDATE_INDIVIDUAL -> userService.updateIndividual(params);
             case CREATE_LEGAL_ENTITY -> userService.createLegalEntity(params);
+            case GET_ALL_LEGAL_ENTITIES -> userService.getAllLegalEntities(params);
+            case GET_LEGAL_ENTITY -> userService.getLegalEntity(params);
+            case UPDATE_LEGAL_ENTITY -> userService.updateLegalEntity(params);
+            case DELETE_USER -> userService.deleteUser(params);
+            case BECOME_NEW_BANK_CLIENT -> bankService.addExistingUser(params);
             case CREATE_ACCOUNT -> accountService.createNewAccount(params);
             case GET_USER_ACCOUNTS -> accountService.getAllByUser(params);
             case TRANSFER_MONEY -> accountService.transferMoney(params);
             case GET_TRANSACTION_HISTORY -> transactionService.getTransactionHistory(params);
         }
-    }
-
-    private void showAllCommands() {
-        Arrays.stream(Command.values()).forEach(System.out::println);
-    }
-
-    private Command getCommandByName(String commandName) throws IOException {
-        return Arrays.stream(Command.values())
-                .filter(c -> c.getCommandName().equals(commandName))
-                .findFirst()
-                .orElseThrow(IOException::new);
-    }
-
-    private boolean isCommandParamsValid(Command command, String commandParamName) {
-        return Arrays.stream(command.getCommandParams())
-                .anyMatch(p -> p.getParamName().equals(commandParamName));
     }
 }

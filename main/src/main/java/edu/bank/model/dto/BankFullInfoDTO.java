@@ -1,22 +1,12 @@
-package edu.bank.model.entity;
+package edu.bank.model.dto;
 
-import java.util.Objects;
+public class BankFullInfoDTO {
 
-public class Bank {
-
-    private long id;
     private String name;
     private String ibanPrefix;
     private double individualsFee;
     private double legalEntitiesFee;
-
-    public long getId() {
-        return id;
-    }
-
-    public void setId(long id) {
-        this.id = id;
-    }
+    private int usersCount;
 
     public String getName() {
         return name;
@@ -50,27 +40,21 @@ public class Bank {
         this.legalEntitiesFee = legalEntitiesFee;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Bank bank = (Bank) o;
-        return id == bank.id;
+    public int getUsersCount() {
+        return usersCount;
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(id);
+    public void setUsersCount(int usersCount) {
+        this.usersCount = usersCount;
     }
 
     @Override
     public String toString() {
-        return "Bank{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", ibanPrefix='" + ibanPrefix + '\'' +
-                ", individualsFee=" + individualsFee +
-                ", legalEntitiesFee=" + legalEntitiesFee +
-                '}';
+        return "Full info about bank:" + "\n" +
+                "Name: " + name + "\n" +
+                "IBAN prefix: " + ibanPrefix + "\n" +
+                "Individuals fee: " + individualsFee + "\n" +
+                "Legal entities fee: " + legalEntitiesFee + "\n" +
+                "Users count: " + usersCount + "\n";
     }
 }

@@ -11,6 +11,9 @@ import edu.bank.model.entity.User;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class UserRepositoryImpl extends BaseRepository implements UserRepository {
 
@@ -40,17 +43,40 @@ public class UserRepositoryImpl extends BaseRepository implements UserRepository
     }
 
     @Override
+    public void createBankUser(long bankId, long userId) {
+        try (PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO banks_users (bank_id," +
+                " user_id) VALUES(?, ?)")) {
+            preparedStatement.setLong(1, bankId);
+            preparedStatement.setLong(2, userId);
+            preparedStatement.executeUpdate();
+        } catch (Exception e) {
+            throw new DAOException();
+        }
+    }
+
+    @Override
+    public List<User> getAllByTheBank(long bankId) {
+        List<User> users = new ArrayList<>();
+        try (PreparedStatement preparedStatement = connection.prepareStatement("SELECT user_id FROM banks_users WHERE bank_id=?")) {
+            preparedStatement.setLong(1, bankId);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                long id = resultSet.getLong("user_id");
+                users.add(get(id));
+            }
+            return users;
+        } catch (Exception e) {
+            return Collections.emptyList();
+        }
+    }
+
+    @Override
     public User get(long id) {
-        User user;
         try (PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM users WHERE id=?")) {
             preparedStatement.setLong(1, id);
             ResultSet resultSet = preparedStatement.executeQuery();
             resultSet.next();
-            user = new User();
-            user.setId(resultSet.getLong("id"));
-            user.setName(resultSet.getString("first_name"));
-            user.setPhone(resultSet.getString("phone"));
-            return user;
+            return doGetMapping(resultSet);
         } catch (Exception e) {
             return null;
         }
@@ -72,7 +98,21 @@ public class UserRepositoryImpl extends BaseRepository implements UserRepository
     }
 
     @Override
-    public boolean isUserIndividual(long id) {
+    public boolean isExists(long id) {
+        try (PreparedStatement preparedStatement = connection.prepareStatement("SELECT COUNT(*) AS recordCount " +
+                "FROM users WHERE id=?")) {
+            preparedStatement.setLong(1, id);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            resultSet.next();
+            int recordCount = resultSet.getInt("recordCount");
+            return recordCount > 0;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    @Override
+    public boolean isIndividual(long id) {
         try (PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM users WHERE id=?")) {
             preparedStatement.setLong(1, id);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -84,7 +124,7 @@ public class UserRepositoryImpl extends BaseRepository implements UserRepository
     }
 
     @Override
-    public boolean isUserBankClient(long bankId, long userId) {
+    public boolean isBankClient(long bankId, long userId) {
         try (PreparedStatement preparedStatement = connection.prepareStatement("SELECT COUNT(*) AS recordCount " +
                 "FROM banks_users WHERE bank_id=? AND user_id=?")) {
             preparedStatement.setLong(1, bankId);
@@ -98,21 +138,22 @@ public class UserRepositoryImpl extends BaseRepository implements UserRepository
         }
     }
 
-    private void createBankUser(long bankId, long userId) {
-        try (PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO banks_users (bank_id," +
-                " user_id) VALUES(?, ?)")) {
-            preparedStatement.setLong(1, bankId);
-            preparedStatement.setLong(2, userId);
-            preparedStatement.executeUpdate();
+    @Override
+    public int getBanksCount(long id) {
+        try (PreparedStatement preparedStatement = connection.prepareStatement("SELECT COUNT(*) AS recordCount " +
+                "FROM banks_users WHERE user_id=?")) {
+            preparedStatement.setLong(1, id);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            resultSet.next();
+            return resultSet.getInt("recordCount");
         } catch (Exception e) {
-            throw new DAOException();
+            return 0;
         }
     }
 
     private void deleteCascade(long id) throws SQLException {
         try {
             connection.setAutoCommit(false);
-            deleteUserAccounts(id);
             deleteUserFromBanks(id);
             deleteUserFromUsers(id);
             connection.commit();
@@ -132,8 +173,8 @@ public class UserRepositoryImpl extends BaseRepository implements UserRepository
         }
     }
 
-    private void deleteUserAccounts(long id) {
-        try (PreparedStatement preparedStatement = connection.prepareStatement("DELETE FROM accounts WHERE user_id=?")) {
+    private void deleteUserFromBanks(long id) {
+        try (PreparedStatement preparedStatement = connection.prepareStatement("DELETE FROM banks_users WHERE user_id=?")) {
             preparedStatement.setLong(1, id);
             preparedStatement.executeUpdate();
         } catch (Exception e) {
@@ -141,10 +182,13 @@ public class UserRepositoryImpl extends BaseRepository implements UserRepository
         }
     }
 
-    private void deleteUserFromBanks(long id) {
-        try (PreparedStatement preparedStatement = connection.prepareStatement("DELETE FROM banks_users WHERE user_id=?")) {
-            preparedStatement.setLong(1, id);
-            preparedStatement.executeUpdate();
+    private User doGetMapping(ResultSet resultSet) {
+        try {
+            User user = new User();
+            user.setId(resultSet.getLong("id"));
+            user.setName(resultSet.getString("first_name"));
+            user.setPhone(resultSet.getString("phone"));
+            return user;
         } catch (Exception e) {
             throw new DAOException();
         }

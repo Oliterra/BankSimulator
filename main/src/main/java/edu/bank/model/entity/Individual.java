@@ -9,12 +9,12 @@ public class Individual extends User {
         return lastName;
     }
 
-    public String getPatronymic() {
-        return patronymic;
-    }
-
     public void setLastName(String lastName) {
         this.lastName = lastName;
+    }
+
+    public String getPatronymic() {
+        return patronymic;
     }
 
     public void setPatronymic(String patronymic) {

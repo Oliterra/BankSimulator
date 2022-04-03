@@ -10,4 +10,8 @@ public interface TransactionRepository {
     Transaction create(Transaction transaction);
 
     List<Transaction> getAllBetweenDates(LocalDate fromDate, LocalDate toDate);
+
+    void deleteByRecipientAccountIban(String iban);
+
+    void deleteBySenderAccountIban(String iban);
 }

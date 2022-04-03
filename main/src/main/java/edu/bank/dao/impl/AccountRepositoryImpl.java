@@ -120,6 +120,30 @@ public class AccountRepositoryImpl extends BaseRepository implements AccountRepo
     }
 
     @Override
+    public void delete(String iban) {
+        try (PreparedStatement preparedStatement = connection.prepareStatement("DELETE FROM accounts WHERE iban=?")) {
+            preparedStatement.setString(1, iban);
+            preparedStatement.executeUpdate();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public boolean isExists(String iban) {
+        try (PreparedStatement preparedStatement = connection.prepareStatement("SELECT COUNT(*) AS recordCount " +
+                "FROM accounts WHERE iban=?")) {
+            preparedStatement.setString(1, iban);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            resultSet.next();
+            int recordCount = resultSet.getInt("recordCount");
+            return recordCount > 0;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    @Override
     public void transferMoney(String fromAccountIban, String toAccountIban, double newFromAccountBalance, double newToAccountBalance) {
         try {
             transferMoneyTransactional(fromAccountIban, toAccountIban, newFromAccountBalance, newToAccountBalance);

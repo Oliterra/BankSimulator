@@ -52,6 +52,27 @@ public class TransactionRepositoryImpl extends BaseRepository implements Transac
         }
     }
 
+    @Override
+    public void deleteByRecipientAccountIban(String iban) {
+        try (PreparedStatement preparedStatement = connection.prepareStatement("DELETE FROM transactions WHERE recipient_account=?")) {
+            preparedStatement.setString(1, iban);
+            preparedStatement.executeUpdate();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new DAOException();
+        }
+    }
+
+    @Override
+    public void deleteBySenderAccountIban(String iban) {
+        try (PreparedStatement preparedStatement = connection.prepareStatement("DELETE FROM transactions WHERE sender_account=?")) {
+            preparedStatement.setString(1, iban);
+            preparedStatement.executeUpdate();
+        } catch (Exception e) {
+            throw new DAOException();
+        }
+    }
+
     private Transaction doGetMapping(ResultSet resultSet) {
         try {
             Transaction transaction = new Transaction();

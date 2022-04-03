@@ -6,10 +6,12 @@ import edu.bank.dao.TransactionRepository;
 import edu.bank.dao.impl.AccountRepositoryImpl;
 import edu.bank.dao.impl.BankRepositoryImpl;
 import edu.bank.dao.impl.TransactionRepositoryImpl;
+import edu.bank.exeption.BusinessLogicException;
 import edu.bank.model.dto.TransactionInfoDTO;
 import edu.bank.model.entity.Account;
 import edu.bank.model.entity.Bank;
 import edu.bank.model.entity.Transaction;
+import edu.bank.service.CommandManager;
 import edu.bank.service.TransactionService;
 
 import java.time.LocalDate;
@@ -20,7 +22,7 @@ import java.util.Map;
 
 import static edu.bank.model.enm.CommandParam.*;
 
-public class TransactionServiceImpl implements TransactionService {
+public class TransactionServiceImpl implements TransactionService, CommandManager {
 
     private final BankRepository bankRepository = new BankRepositoryImpl();
     private final AccountRepository accountRepository = new AccountRepositoryImpl();
@@ -43,25 +45,19 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     public void getTransactionHistory(Map<String, String> transactionsInfo) {
-        if (!transactionsInfo.containsKey(ACCOUNT_IBAN_PARAM)) {
-            System.out.println("Account number is not specified");
-            return;
-        }
+        if (!areAllParamsPresent(new String[]{ACCOUNT_IBAN_PARAM}, transactionsInfo))
+            throw new BusinessLogicException("Account number is not specified");
         Account account = accountRepository.get(transactionsInfo.get(ACCOUNT_IBAN_PARAM));
-        if (account == null){
-            System.out.println("Invalid IBAN");
-            return;
-        }
-        LocalDate fromDate = null;
-        LocalDate toDate = null;
+        if (account == null) throw new BusinessLogicException("Invalid IBAN");
+        LocalDate fromDate;
+        LocalDate toDate;
         try {
             fromDate = (transactionsInfo.containsKey(FROM_DATE_PARAM)) ? LocalDate.parse(transactionsInfo.get(FROM_DATE_PARAM)) :
                     account.getRegistrationDate();
             toDate = (transactionsInfo.containsKey(TO_DATE_PARAM)) ? LocalDate.parse(transactionsInfo.get(TO_DATE_PARAM)) :
                     LocalDate.now();
         } catch (DateTimeParseException e) {
-            System.out.println("Invalid date");
-            return;
+            throw new BusinessLogicException("Invalid date");
         }
         List<Transaction> transactions = transactionRepository.getAllBetweenDates(fromDate, toDate);
         if (transactions.isEmpty()) System.out.println("No transactions found between the specified numbers");

@@ -1,17 +1,24 @@
 package edu.bank.service;
 
+import edu.bank.model.dto.AccountMainInfoDTO;
 import edu.bank.model.entity.Account;
 
-import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 public interface AccountService {
 
-    void createNewAccount(Map<String, String> accountInfo) throws IOException;
+    void createNewAccount(Map<String, String> accountInfo);
 
-    Account getDefaultAccountForNewUser(long bankId, long userId) throws IOException;
+    void getAllByUser(Map<String, String> info);
 
-    void getAllByUser(Map<String, String> info) throws IOException;
+    List<AccountMainInfoDTO> getAllByUser(long id);
 
-    void transferMoney(Map<String, String> transferInfo) throws IOException;
+    Account getDefaultAccountForNewUser(long bankId, long userId);
+
+    void deleteAccount(String iban);
+
+    void deleteAllUserAccountsOfSpecificBank(long userId, long bankId);
+
+    void transferMoney(Map<String, String> transferInfo);
 }
