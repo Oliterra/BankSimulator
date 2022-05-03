@@ -1,5 +1,7 @@
-package edu.bank.command;
+package edu.bank.command.impl;
 
+import edu.bank.command.CommandDescriptor;
+import edu.bank.command.CommandInspector;
 import edu.bank.command.model.CommandList;
 import edu.bank.console.ConsoleLineParser;
 import lombok.RequiredArgsConstructor;

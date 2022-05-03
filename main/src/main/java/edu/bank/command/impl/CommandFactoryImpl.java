@@ -1,5 +1,8 @@
-package edu.bank.command;
+package edu.bank.command.impl;
 
+import edu.bank.command.CommandFactory;
+import edu.bank.command.CommandInspector;
+import edu.bank.command.CommandParamInspector;
 import edu.bank.command.model.Command;
 import edu.bank.command.model.CommandList;
 import edu.bank.command.model.CommandParam;
@@ -21,7 +24,7 @@ import java.util.Set;
 public class CommandFactoryImpl implements CommandFactory {
 
     private final CommandInspector commandInspector;
-    private final CommandParamInspectorImpl commandParamInspector;
+    private final CommandParamInspector commandParamInspector;
     private final ConsoleLineParser consoleLineParser;
     private CommandList commandList;
 

@@ -7,6 +7,9 @@ import edu.bank.exeption.DAOException;
 import edu.bank.model.entity.Individual;
 import edu.bank.model.entity.LegalEntity;
 import edu.bank.model.entity.User;
+import lombok.RequiredArgsConstructor;
+import org.springframework.jdbc.datasource.ConnectionHolder;
+import org.springframework.stereotype.Repository;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -15,26 +18,29 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class UserRepositoryImpl extends BaseRepository implements UserRepository {
+@Repository
+@RequiredArgsConstructor
+public class UserRepositoryImpl implements UserRepository {
 
-    private final IndividualRepository individualRepository = new IndividualRepositoryImpl();
-    private final LegalEntityRepository legalEntityRepository = new LegalEntityRepositoryImpl();
+    private final ConnectionHolder connectionHolder;
+    private final IndividualRepository individualRepository;
+    private final LegalEntityRepository legalEntityRepository;
 
     @Override
     public <T extends User> T create(long bankId, T user) {
         User createdUser = null;
         try {
             try {
-                connection.setAutoCommit(false);
+                connectionHolder.getConnection().setAutoCommit(false);
                 if (user instanceof Individual) createdUser = individualRepository.create((Individual) user);
                 if (user instanceof LegalEntity) createdUser = legalEntityRepository.create((LegalEntity) user);
                 if (createdUser == null || bankId == 0) throw new DAOException();
                 createBankUser(bankId, createdUser.getId());
-                connection.commit();
+                connectionHolder.getConnection().commit();
             } catch (Exception e) {
-                connection.rollback();
+                connectionHolder.getConnection().rollback();
             } finally {
-                connection.setAutoCommit(true);
+                connectionHolder.getConnection().setAutoCommit(true);
             }
         } catch (Exception e) {
             throw new DAOException();
@@ -44,7 +50,7 @@ public class UserRepositoryImpl extends BaseRepository implements UserRepository
 
     @Override
     public void createBankUser(long bankId, long userId) {
-        try (PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO banks_users (bank_id," +
+        try (PreparedStatement preparedStatement = connectionHolder.getConnection().prepareStatement("INSERT INTO banks_users (bank_id," +
                 " user_id) VALUES(?, ?)")) {
             preparedStatement.setLong(1, bankId);
             preparedStatement.setLong(2, userId);
@@ -57,7 +63,7 @@ public class UserRepositoryImpl extends BaseRepository implements UserRepository
     @Override
     public List<User> getAllByTheBank(long bankId) {
         List<User> users = new ArrayList<>();
-        try (PreparedStatement preparedStatement = connection.prepareStatement("SELECT user_id FROM banks_users WHERE bank_id=?")) {
+        try (PreparedStatement preparedStatement = connectionHolder.getConnection().prepareStatement("SELECT user_id FROM banks_users WHERE bank_id=?")) {
             preparedStatement.setLong(1, bankId);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
@@ -72,7 +78,7 @@ public class UserRepositoryImpl extends BaseRepository implements UserRepository
 
     @Override
     public User get(long id) {
-        try (PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM users WHERE id=?")) {
+        try (PreparedStatement preparedStatement = connectionHolder.getConnection().prepareStatement("SELECT * FROM users WHERE id=?")) {
             preparedStatement.setLong(1, id);
             ResultSet resultSet = preparedStatement.executeQuery();
             resultSet.next();
@@ -99,7 +105,7 @@ public class UserRepositoryImpl extends BaseRepository implements UserRepository
 
     @Override
     public boolean isExists(long id) {
-        try (PreparedStatement preparedStatement = connection.prepareStatement("SELECT COUNT(*) AS recordCount " +
+        try (PreparedStatement preparedStatement = connectionHolder.getConnection().prepareStatement("SELECT COUNT(*) AS recordCount " +
                 "FROM users WHERE id=?")) {
             preparedStatement.setLong(1, id);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -113,7 +119,7 @@ public class UserRepositoryImpl extends BaseRepository implements UserRepository
 
     @Override
     public boolean isIndividual(long id) {
-        try (PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM users WHERE id=?")) {
+        try (PreparedStatement preparedStatement = connectionHolder.getConnection().prepareStatement("SELECT * FROM users WHERE id=?")) {
             preparedStatement.setLong(1, id);
             ResultSet resultSet = preparedStatement.executeQuery();
             resultSet.next();
@@ -125,7 +131,7 @@ public class UserRepositoryImpl extends BaseRepository implements UserRepository
 
     @Override
     public boolean isBankClient(long bankId, long userId) {
-        try (PreparedStatement preparedStatement = connection.prepareStatement("SELECT COUNT(*) AS recordCount " +
+        try (PreparedStatement preparedStatement = connectionHolder.getConnection().prepareStatement("SELECT COUNT(*) AS recordCount " +
                 "FROM banks_users WHERE bank_id=? AND user_id=?")) {
             preparedStatement.setLong(1, bankId);
             preparedStatement.setLong(2, userId);
@@ -140,7 +146,7 @@ public class UserRepositoryImpl extends BaseRepository implements UserRepository
 
     @Override
     public int getBanksCount(long id) {
-        try (PreparedStatement preparedStatement = connection.prepareStatement("SELECT COUNT(*) AS recordCount " +
+        try (PreparedStatement preparedStatement = connectionHolder.getConnection().prepareStatement("SELECT COUNT(*) AS recordCount " +
                 "FROM banks_users WHERE user_id=?")) {
             preparedStatement.setLong(1, id);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -153,19 +159,19 @@ public class UserRepositoryImpl extends BaseRepository implements UserRepository
 
     private void deleteCascade(long id) throws SQLException {
         try {
-            connection.setAutoCommit(false);
+            connectionHolder.getConnection().setAutoCommit(false);
             deleteUserFromBanks(id);
             deleteUserFromUsers(id);
-            connection.commit();
+            connectionHolder.getConnection().commit();
         } catch (Exception e) {
-            connection.rollback();
+            connectionHolder.getConnection().rollback();
         } finally {
-            connection.setAutoCommit(true);
+            connectionHolder.getConnection().setAutoCommit(true);
         }
     }
 
     private void deleteUserFromUsers(long id) {
-        try (PreparedStatement preparedStatement = connection.prepareStatement("DELETE FROM users WHERE id=?")) {
+        try (PreparedStatement preparedStatement = connectionHolder.getConnection().prepareStatement("DELETE FROM users WHERE id=?")) {
             preparedStatement.setLong(1, id);
             preparedStatement.executeUpdate();
         } catch (Exception e) {
@@ -174,7 +180,7 @@ public class UserRepositoryImpl extends BaseRepository implements UserRepository
     }
 
     private void deleteUserFromBanks(long id) {
-        try (PreparedStatement preparedStatement = connection.prepareStatement("DELETE FROM banks_users WHERE user_id=?")) {
+        try (PreparedStatement preparedStatement = connectionHolder.getConnection().prepareStatement("DELETE FROM banks_users WHERE user_id=?")) {
             preparedStatement.setLong(1, id);
             preparedStatement.executeUpdate();
         } catch (Exception e) {

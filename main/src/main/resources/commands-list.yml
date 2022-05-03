@@ -1,0 +1,42 @@
+commands:
+  - name: "createBank"
+    description: "create a new bank"
+    params:
+      - name: "name"
+        description: "set the bank name"
+      - name: "ibanP"
+        description: "set the iban prefix of the bank"
+      - name: "indFee"
+        description: "set the iban prefix of the bank"
+      - name: "legFee"
+        description: "set a fee for bank customers (individuals)"
+
+  - name: "allBanks"
+    description: "get all banks"
+
+  - name: "getBank"
+    description: "get information about a bank"
+    params:
+      - name: "bId"
+        description: "set the bank id"
+
+  - name: "updateBank"
+    description: "update an existing bank"
+    params:
+      - name: "bId"
+        description: "set the bank id to update"
+      - name: "name"
+        description: "set the bank name"
+      - name: "ibanP"
+        description: "set the iban prefix of the bank"
+      - name: "indFee"
+        description: "set the iban prefix of the bank"
+      - name: "legFee"
+        description: "set a fee for bank customers (individuals)"
+
+  - name: "deleteBank"
+    description: "delete a bank from the system, all accounts of its users their transaction history(the user is deleted if he belonged only to this bank)"
+    params:
+      - name: "bId"
+        description: "set the bank id to delete"
+

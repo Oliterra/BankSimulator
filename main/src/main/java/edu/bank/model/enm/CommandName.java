@@ -4,7 +4,7 @@ import java.util.Arrays;
 
 import static edu.bank.model.enm.CommandParam.*;
 
-public enum Command {
+public enum CommandName {
 
     CREATE_BANK("createBank", "create a new bank", new CommandParam[]{BANK_NAME,
             IBAN_PREFIX, INDIVIDUALS_FEE, LEGAL_ENTITIES_FEE}),
@@ -43,7 +43,7 @@ public enum Command {
     private final String commandDescription;
     private final CommandParam[] commandParams;
 
-    Command(String commandName, String commandDescription, CommandParam[] commandParams) {
+    CommandName(String commandName, String commandDescription, CommandParam[] commandParams) {
         this.commandName = commandName;
         this.commandDescription = commandDescription;
         this.commandParams = commandParams;

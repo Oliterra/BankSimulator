@@ -3,6 +3,9 @@ package edu.bank.dao.impl;
 import edu.bank.dao.BankRepository;
 import edu.bank.exeption.DAOException;
 import edu.bank.model.entity.Bank;
+import lombok.RequiredArgsConstructor;
+import org.springframework.jdbc.datasource.ConnectionHolder;
+import org.springframework.stereotype.Repository;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -11,11 +14,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class BankRepositoryImpl extends BaseRepository implements BankRepository {
+@Repository
+@RequiredArgsConstructor
+public class BankRepositoryImpl implements BankRepository {
 
+    private final ConnectionHolder connectionHolder;
     @Override
     public void create(Bank bank) {
-        try (PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO banks(name, " +
+        try (PreparedStatement preparedStatement = connectionHolder.getConnection().prepareStatement("INSERT INTO banks(name, " +
                 "iban_prefix, individuals_fee, legal_entities_fee) VALUES(?, ?, ?, ?)")) {
             preparedStatement.setString(1, bank.getName());
             preparedStatement.setString(2, bank.getIbanPrefix());
@@ -30,7 +36,7 @@ public class BankRepositoryImpl extends BaseRepository implements BankRepository
     @Override
     public List<Bank> getAll() {
         List<Bank> banks = new ArrayList<>();
-        try (PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM banks")) {
+        try (PreparedStatement preparedStatement = connectionHolder.getConnection().prepareStatement("SELECT * FROM banks")) {
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 banks.add(doGetMapping(resultSet));
@@ -58,7 +64,7 @@ public class BankRepositoryImpl extends BaseRepository implements BankRepository
 
     @Override
     public String getIbanPrefixById(long id) {
-        try (PreparedStatement preparedStatement = connection.prepareStatement("SELECT iban_prefix FROM banks WHERE id=?")) {
+        try (PreparedStatement preparedStatement = connectionHolder.getConnection().prepareStatement("SELECT iban_prefix FROM banks WHERE id=?")) {
             preparedStatement.setLong(1, id);
             ResultSet resultSet = preparedStatement.executeQuery();
             resultSet.next();
@@ -70,7 +76,7 @@ public class BankRepositoryImpl extends BaseRepository implements BankRepository
 
     @Override
     public void update(long id, Bank bank) {
-        try (PreparedStatement preparedStatement = connection.prepareStatement("UPDATE banks SET name=?, " +
+        try (PreparedStatement preparedStatement = connectionHolder.getConnection().prepareStatement("UPDATE banks SET name=?, " +
                 "iban_prefix=?, individuals_fee=?, legal_entities_fee=? WHERE id=?")) {
             preparedStatement.setString(1, bank.getName());
             preparedStatement.setString(2, bank.getIbanPrefix());
@@ -94,7 +100,7 @@ public class BankRepositoryImpl extends BaseRepository implements BankRepository
 
     @Override
     public boolean isExists(long id) {
-        try (PreparedStatement preparedStatement = connection.prepareStatement("SELECT COUNT(*) AS recordCount " +
+        try (PreparedStatement preparedStatement = connectionHolder.getConnection().prepareStatement("SELECT COUNT(*) AS recordCount " +
                 "FROM banks WHERE id=?")) {
             preparedStatement.setLong(1, id);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -108,7 +114,7 @@ public class BankRepositoryImpl extends BaseRepository implements BankRepository
 
     @Override
     public int getUsersCount(long id) {
-        try (PreparedStatement preparedStatement = connection.prepareStatement("SELECT COUNT(*) AS recordCount " +
+        try (PreparedStatement preparedStatement = connectionHolder.getConnection().prepareStatement("SELECT COUNT(*) AS recordCount " +
                 "FROM banks_users WHERE bank_id=?")) {
             preparedStatement.setLong(1, id);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -120,7 +126,7 @@ public class BankRepositoryImpl extends BaseRepository implements BankRepository
     }
 
     private Bank getByAnyParamIfPresent(String sql, Object criteria) {
-        try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+        try (PreparedStatement preparedStatement = connectionHolder.getConnection().prepareStatement(sql)) {
             if (criteria instanceof Long) preparedStatement.setLong(1, (long) criteria);
             if (criteria instanceof String) preparedStatement.setString(1, (String) criteria);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -133,19 +139,19 @@ public class BankRepositoryImpl extends BaseRepository implements BankRepository
 
     private void deleteCascade(long id) throws SQLException {
         try {
-            connection.setAutoCommit(false);
+            connectionHolder.getConnection().setAutoCommit(false);
             deleteBankUsers(id);
             deleteBankFromBanks(id);
-            connection.commit();
+            connectionHolder.getConnection().commit();
         } catch (Exception e) {
-            connection.rollback();
+            connectionHolder.getConnection().rollback();
         } finally {
-            connection.setAutoCommit(true);
+            connectionHolder.getConnection().setAutoCommit(true);
         }
     }
 
     private void deleteBankUsers(long id) {
-        try (PreparedStatement preparedStatement = connection.prepareStatement("DELETE FROM banks_users WHERE bank_id=?")) {
+        try (PreparedStatement preparedStatement = connectionHolder.getConnection().prepareStatement("DELETE FROM banks_users WHERE bank_id=?")) {
             preparedStatement.setLong(1, id);
             preparedStatement.executeUpdate();
         } catch (Exception e) {
@@ -154,7 +160,7 @@ public class BankRepositoryImpl extends BaseRepository implements BankRepository
     }
 
     private void deleteBankFromBanks(long id) {
-        try (PreparedStatement preparedStatement = connection.prepareStatement("DELETE FROM banks WHERE id=?")) {
+        try (PreparedStatement preparedStatement = connectionHolder.getConnection().prepareStatement("DELETE FROM banks WHERE id=?")) {
             preparedStatement.setLong(1, id);
             preparedStatement.executeUpdate();
         } catch (Exception e) {

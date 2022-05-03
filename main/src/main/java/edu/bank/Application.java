@@ -1,13 +1,16 @@
 package edu.bank;
 
-import edu.bank.console.ConsoleWorker;
-import edu.bank.console.ConsoleWorkerImpl;
+import edu.bank.console.impl.ConsoleInterpreterImpl;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.ConfigurableApplicationContext;
 
-public class Main {
-
-    private static final ConsoleWorker CONSOLE_WORKER = new ConsoleWorkerImpl();
+@SpringBootApplication
+public class Application {
 
     public static void main(String[] args) {
-        CONSOLE_WORKER.simulateBankOperations();
+        ConfigurableApplicationContext context = SpringApplication.run(Application.class, args);
+        ConsoleInterpreterImpl consoleInterpreter = context.getBean(ConsoleInterpreterImpl.class);
+        consoleInterpreter.interpretConsoleInput();
     }
 }

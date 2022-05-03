@@ -1,4 +1,4 @@
-package edu.bank.model.command;
+package edu.bank.command.model;
 
 import lombok.Data;
 

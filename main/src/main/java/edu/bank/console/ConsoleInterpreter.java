@@ -1,2 +1,5 @@
-package edu.bank.console;public interface ConsoleInterpreter {
+package edu.bank.console;
+
+public interface ConsoleInterpreter {
+    void interpretConsoleInput();
 }

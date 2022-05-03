@@ -1,6 +1,8 @@
-package edu.bank.model.command;
+package edu.bank.command.model;
 
 import lombok.Data;
+
+import static edu.bank.model.enm.ConsoleColor.*;
 
 @Data
 public class CommandParam implements Cloneable {
@@ -9,18 +11,9 @@ public class CommandParam implements Cloneable {
     private String description;
     private String value;
 
-    /*@Override
-    public String toString() {
-        return "\t" + GREEN_BOLD + name + RESET + " - " + description + "\n";
-    }*/
-
     @Override
     public String toString() {
-        return "CommandParam{" +
-                "name='" + name + '\'' +
-                ", description='" + description + '\'' +
-                ", value='" + value + '\'' +
-                '}';
+        return "\t" + GREEN_BOLD + name + RESET + " - " + description + "\n";
     }
 
     @Override

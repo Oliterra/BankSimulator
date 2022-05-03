@@ -1,6 +1,7 @@
-package edu.bank.console;
+package edu.bank.console.impl;
 
 import edu.bank.command.model.CommandResult;
+import edu.bank.console.ConsoleCommandResultViewer;
 import edu.bank.dao.BankRepository;
 import edu.bank.model.dto.TransactionInfoDTO;
 import edu.bank.model.enm.CommandResultStatus;

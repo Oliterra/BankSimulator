@@ -1,9 +1,11 @@
-package edu.bank.console;
+package edu.bank.console.impl;
 
 import edu.bank.command.CommandDescriptor;
 import edu.bank.command.CommandExecutor;
 import edu.bank.command.CommandFactory;
 import edu.bank.command.model.Command;
+import edu.bank.console.ConsoleCommandResultViewer;
+import edu.bank.console.ConsoleInterpreter;
 import edu.bank.exeption.BusinessLogicException;
 import edu.bank.exeption.DAOException;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +24,7 @@ public class ConsoleInterpreterImpl implements ConsoleInterpreter {
     private final CommandDescriptor commandDescriptor;
     private final CommandFactory commandFactory;
     private final CommandExecutor commandExecutor;
-    private final ConsoleCommandResultViewerImpl commandResultViewer;
+    private final ConsoleCommandResultViewer commandResultViewer;
     private static final BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 
     @Override
@@ -55,7 +57,6 @@ public class ConsoleInterpreterImpl implements ConsoleInterpreter {
             } catch (Exception e) {
                 commandResultViewer.showFailureMessage("Sorry, an internal error has occurred. Try again later");
                 log.error("A error has occurred: " + e.getMessage());
-                e.printStackTrace();
             }
         }
     }

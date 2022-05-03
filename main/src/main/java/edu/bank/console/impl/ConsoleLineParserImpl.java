@@ -1,6 +1,7 @@
-package edu.bank.console;
+package edu.bank.console.impl;
 
 import edu.bank.command.CommandInspector;
+import edu.bank.console.ConsoleLineParser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

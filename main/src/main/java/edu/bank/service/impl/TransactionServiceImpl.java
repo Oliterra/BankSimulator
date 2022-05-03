@@ -1,35 +1,34 @@
 package edu.bank.service.impl;
 
+import edu.bank.command.CommandParamInspector;
+import edu.bank.command.model.CommandParam;
+import edu.bank.console.ConsoleCommandResultViewer;
 import edu.bank.dao.AccountRepository;
-import edu.bank.dao.BankRepository;
 import edu.bank.dao.TransactionRepository;
-import edu.bank.dao.impl.AccountRepositoryImpl;
-import edu.bank.dao.impl.BankRepositoryImpl;
-import edu.bank.dao.impl.TransactionRepositoryImpl;
 import edu.bank.exeption.BusinessLogicException;
-import edu.bank.model.dto.TransactionInfoDTO;
 import edu.bank.model.entity.Account;
-import edu.bank.model.entity.Bank;
 import edu.bank.model.entity.Transaction;
-import edu.bank.service.CommandManager;
 import edu.bank.service.TransactionService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 
-import static edu.bank.model.enm.CommandParam.*;
+@Service
+@RequiredArgsConstructor
+public class TransactionServiceImpl implements TransactionService {
 
-public class TransactionServiceImpl implements TransactionService, CommandManager {
-
-    private final BankRepository bankRepository = new BankRepositoryImpl();
-    private final AccountRepository accountRepository = new AccountRepositoryImpl();
-    private final TransactionRepository transactionRepository = new TransactionRepositoryImpl();
-    private static final String FROM_DATE_PARAM = FROM_DATE.getParamName();
-    private static final String TO_DATE_PARAM = TO_DATE.getParamName();
-    private static final String ACCOUNT_IBAN_PARAM = ACCOUNT_IBAN.getParamName();
+    private final CommandParamInspector commandParamInspector;
+    private final ConsoleCommandResultViewer commandResultViewer;
+    private final AccountRepository accountRepository;
+    private final TransactionRepository transactionRepository;
+    private static final String FROM_DATE_PARAM = "from";
+    private static final String TO_DATE_PARAM = "to";
+    private static final String ACCOUNT_IBAN_PARAM = "acc";
 
     @Override
     public Transaction createTransaction(Account fromAccount, Account toAccount, double sum, double fee) {
@@ -44,41 +43,24 @@ public class TransactionServiceImpl implements TransactionService, CommandManage
     }
 
     @Override
-    public void getTransactionHistory(Map<String, String> transactionsInfo) {
-        if (!areAllParamsPresent(new String[]{ACCOUNT_IBAN_PARAM}, transactionsInfo))
+    public void getTransactionHistory(Set<CommandParam> transactionsInfo) {
+        if (!commandParamInspector.areAllCommandParamsPresent(new String[]{ACCOUNT_IBAN_PARAM}, transactionsInfo))
             throw new BusinessLogicException("Account number is not specified");
-        Account account = accountRepository.get(transactionsInfo.get(ACCOUNT_IBAN_PARAM));
+        String accountIban = commandParamInspector.getParamValueByNameIfPresent(ACCOUNT_IBAN_PARAM, transactionsInfo);
+        Account account = accountRepository.get(accountIban);
         if (account == null) throw new BusinessLogicException("Invalid IBAN");
         LocalDate fromDate;
         LocalDate toDate;
         try {
-            fromDate = (transactionsInfo.containsKey(FROM_DATE_PARAM)) ? LocalDate.parse(transactionsInfo.get(FROM_DATE_PARAM)) :
+            fromDate = (commandParamInspector.areCommandParamsContainsParam(FROM_DATE_PARAM, transactionsInfo)) ? LocalDate.parse(commandParamInspector.getParamValueByNameIfPresent(FROM_DATE_PARAM, transactionsInfo)) :
                     account.getRegistrationDate();
-            toDate = (transactionsInfo.containsKey(TO_DATE_PARAM)) ? LocalDate.parse(transactionsInfo.get(TO_DATE_PARAM)) :
+            toDate = (commandParamInspector.areCommandParamsContainsParam(TO_DATE_PARAM, transactionsInfo)) ? LocalDate.parse(commandParamInspector.getParamValueByNameIfPresent(TO_DATE_PARAM, transactionsInfo)) :
                     LocalDate.now();
         } catch (DateTimeParseException e) {
             throw new BusinessLogicException("Invalid date");
         }
         List<Transaction> transactions = transactionRepository.getAllBetweenDates(fromDate, toDate);
-        if (transactions.isEmpty()) System.out.println("No transactions found between the specified numbers");
-        else transactions.forEach(this::printReceipt);
-    }
-
-    @Override
-    public void printReceipt(Transaction transaction) {
-        TransactionInfoDTO transactionInfoDTO = new TransactionInfoDTO();
-        String recipientIban = transaction.getRecipientAccount().getIban();
-        Bank recipientBank = bankRepository.getByIbanPrefix(recipientIban.substring(4, 8));
-        transactionInfoDTO.setRecipientIban(recipientIban);
-        transactionInfoDTO.setRecipientBankName(recipientBank.getName());
-        transactionInfoDTO.setId(transaction.getId());
-        transactionInfoDTO.setSenderIban(transaction.getSenderAccount().getIban());
-        transactionInfoDTO.setCurrency(transaction.getSenderAccount().getCurrency().toString());
-        transactionInfoDTO.setSum(transaction.getFullSum());
-        transactionInfoDTO.setFee(transaction.getFee());
-        transactionInfoDTO.setFullSum(transaction.getFullSum() + transaction.getFullSum() * transaction.getFee());
-        transactionInfoDTO.setDate(transaction.getDate());
-        transactionInfoDTO.setTime(transaction.getTime());
-        System.out.println(transactionInfoDTO);
+        if (transactions.isEmpty()) commandResultViewer.showFailureMessage("No transactions found between the specified numbers");
+        else transactions.forEach(commandResultViewer::printReceipt);
     }
 }

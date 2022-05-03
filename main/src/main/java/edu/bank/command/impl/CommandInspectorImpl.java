@@ -1,5 +1,6 @@
-package edu.bank.command;
+package edu.bank.command.impl;
 
+import edu.bank.command.CommandInspector;
 import edu.bank.command.model.Command;
 import org.springframework.stereotype.Component;
 
