@@ -1,4 +1,2 @@
-package edu.bank.console;
-
-public class ConsoleCommandResultViewer {
+package edu.bank.console;public interface ConsoleCommandResultViewer {
 }

@@ -1,2 +1,2 @@
-package edu.bank.console;public class ConsoleLineParser {
+package edu.bank.console;public interface ConsoleLineParser {
 }

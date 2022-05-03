@@ -1,4 +1,2 @@
-package edu.bank.command;
-
-public class CommandExecutor {
+package edu.bank.command;public interface CommandExecutor {
 }

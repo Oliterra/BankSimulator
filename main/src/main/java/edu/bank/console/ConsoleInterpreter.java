@@ -1,4 +1,2 @@
-package edu.bank.console;
-
-public class ConsoleInterpreter {
+package edu.bank.console;public interface ConsoleInterpreter {
 }

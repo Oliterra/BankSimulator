@@ -1,4 +1,2 @@
-package edu.bank.command;
-
-public class CommandFactory {
+package edu.bank.command;public interface CommandFactory {
 }
