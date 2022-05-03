@@ -1,0 +1,37 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1
+      author: nadezhda.tarasava
+      changes:
+        - createTable:
+            tableName: banks
+            columns:
+              - column:
+                  name: id
+                  type: int
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(100)
+                  constraints:
+                    unique: true
+                    nullable: false
+              - column:
+                  name: iban_prefix
+                  type: varchar(4)
+                  constraints:
+                    unique: true
+                    nullable: false
+              - column:
+                  name: individuals_fee
+                  type: double
+                  constraints:
+                    nullable: false
+              - column:
+                  name: legal_entities_fee
+                  type: double
+                  constraints:
+                    nullable: false
