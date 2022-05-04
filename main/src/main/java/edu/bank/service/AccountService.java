@@ -1,16 +1,17 @@
 package edu.bank.service;
 
+import edu.bank.command.model.CommandParam;
 import edu.bank.model.dto.AccountMainInfoDTO;
 import edu.bank.model.entity.Account;
 
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 
 public interface AccountService {
 
-    void createNewAccount(Map<String, String> accountInfo);
+    void createNewAccount(Set<CommandParam> accountInfo);
 
-    void getAllByUser(Map<String, String> info);
+    void getAllByUser(Set<CommandParam> info);
 
     List<AccountMainInfoDTO> getAllByUser(long id);
 
@@ -20,5 +21,5 @@ public interface AccountService {
 
     void deleteAllUserAccountsOfSpecificBank(long userId, long bankId);
 
-    void transferMoney(Map<String, String> transferInfo);
+    void transferMoney(Set<CommandParam> transferInfo);
 }

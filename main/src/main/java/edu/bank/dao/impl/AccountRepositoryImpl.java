@@ -5,22 +5,25 @@ import edu.bank.dao.UserRepository;
 import edu.bank.exeption.DAOException;
 import edu.bank.model.enm.Currency;
 import edu.bank.model.entity.Account;
+import lombok.RequiredArgsConstructor;
+import org.springframework.jdbc.datasource.ConnectionHolder;
+import org.springframework.stereotype.Repository;
 
-import java.sql.Date;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class AccountRepositoryImpl extends BaseRepository implements AccountRepository {
+@Repository
+@RequiredArgsConstructor
+public class AccountRepositoryImpl implements AccountRepository {
+    private final ConnectionHolder connectionHolder;
 
-    private final UserRepository userRepository = new UserRepositoryImpl();
+    private final UserRepository userRepository;
 
     @Override
     public void create(Account account) {
-        try (PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO accounts(iban, " +
+        try (PreparedStatement preparedStatement = connectionHolder.getConnection().prepareStatement("INSERT INTO accounts(iban, " +
                 "user_id, currency, balance, registration_date) VALUES(?, ?, ?, ?, ?)")) {
             preparedStatement.setString(1, account.getIban());
             preparedStatement.setLong(2, account.getUser().getId());
@@ -35,7 +38,7 @@ public class AccountRepositoryImpl extends BaseRepository implements AccountRepo
 
     @Override
     public Account get(String iban) {
-        try (PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM accounts WHERE iban=?")) {
+        try (PreparedStatement preparedStatement = connectionHolder.getConnection().prepareStatement("SELECT * FROM accounts WHERE iban=?")) {
             preparedStatement.setString(1, iban);
             ResultSet resultSet = preparedStatement.executeQuery();
             resultSet.next();
@@ -48,7 +51,7 @@ public class AccountRepositoryImpl extends BaseRepository implements AccountRepo
     @Override
     public List<Account> getAll() {
         List<Account> accounts = new ArrayList<>();
-        try (PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM accounts")) {
+        try (PreparedStatement preparedStatement = connectionHolder.getConnection().prepareStatement("SELECT * FROM accounts")) {
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 Account account = doGetMapping(resultSet);
@@ -63,7 +66,7 @@ public class AccountRepositoryImpl extends BaseRepository implements AccountRepo
     @Override
     public List<Account> getAllByUserId(long userId) {
         List<Account> accounts = new ArrayList<>();
-        try (PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM accounts WHERE user_id=?")) {
+        try (PreparedStatement preparedStatement = connectionHolder.getConnection().prepareStatement("SELECT * FROM accounts WHERE user_id=?")) {
             preparedStatement.setLong(1, userId);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
@@ -79,7 +82,7 @@ public class AccountRepositoryImpl extends BaseRepository implements AccountRepo
     @Override
     public List<Account> getAllByUserIdAndCurrency(long userId, Currency currency) {
         List<Account> accounts = new ArrayList<>();
-        try (PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM accounts WHERE user_id=? AND currency=?")) {
+        try (PreparedStatement preparedStatement = connectionHolder.getConnection().prepareStatement("SELECT * FROM accounts WHERE user_id=? AND currency=?")) {
             preparedStatement.setLong(1, userId);
             preparedStatement.setString(2, currency.toString());
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -109,7 +112,7 @@ public class AccountRepositoryImpl extends BaseRepository implements AccountRepo
 
     @Override
     public double getBalanceByIban(String iban) {
-        try (PreparedStatement preparedStatement = connection.prepareStatement("SELECT balance FROM accounts WHERE iban=?")) {
+        try (PreparedStatement preparedStatement = connectionHolder.getConnection().prepareStatement("SELECT balance FROM accounts WHERE iban=?")) {
             preparedStatement.setString(1, iban);
             ResultSet resultSet = preparedStatement.executeQuery();
             resultSet.next();
@@ -121,7 +124,7 @@ public class AccountRepositoryImpl extends BaseRepository implements AccountRepo
 
     @Override
     public void delete(String iban) {
-        try (PreparedStatement preparedStatement = connection.prepareStatement("DELETE FROM accounts WHERE iban=?")) {
+        try (PreparedStatement preparedStatement = connectionHolder.getConnection().prepareStatement("DELETE FROM accounts WHERE iban=?")) {
             preparedStatement.setString(1, iban);
             preparedStatement.executeUpdate();
         } catch (Exception e) {
@@ -131,7 +134,7 @@ public class AccountRepositoryImpl extends BaseRepository implements AccountRepo
 
     @Override
     public boolean isExists(String iban) {
-        try (PreparedStatement preparedStatement = connection.prepareStatement("SELECT COUNT(*) AS recordCount " +
+        try (PreparedStatement preparedStatement = connectionHolder.getConnection().prepareStatement("SELECT COUNT(*) AS recordCount " +
                 "FROM accounts WHERE iban=?")) {
             preparedStatement.setString(1, iban);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -155,19 +158,19 @@ public class AccountRepositoryImpl extends BaseRepository implements AccountRepo
     private void transferMoneyTransactional(String fromAccountIban, String toAccountIban, double newFromAccountBalance,
                                             double newToAccountBalance) throws SQLException {
         try {
-            connection.setAutoCommit(false);
+            connectionHolder.getConnection().setAutoCommit(false);
             updateBalance(fromAccountIban, newFromAccountBalance);
             updateBalance(toAccountIban, newToAccountBalance);
-            connection.commit();
+            connectionHolder.getConnection().commit();
         } catch (Exception e) {
-            connection.rollback();
+            connectionHolder.getConnection().rollback();
         } finally {
-            connection.setAutoCommit(true);
+            connectionHolder.getConnection().setAutoCommit(true);
         }
     }
 
     private void updateBalance(String iban, double newBalance) {
-        try (PreparedStatement preparedStatement = connection.prepareStatement("UPDATE accounts SET balance=? WHERE iban=?")) {
+        try (PreparedStatement preparedStatement = connectionHolder.getConnection().prepareStatement("UPDATE accounts SET balance=? WHERE iban=?")) {
             preparedStatement.setDouble(1, newBalance);
             preparedStatement.setString(2, iban);
             preparedStatement.executeUpdate();

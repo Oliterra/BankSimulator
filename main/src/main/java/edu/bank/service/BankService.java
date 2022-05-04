@@ -1,18 +1,20 @@
 package edu.bank.service;
 
-import java.util.Map;
+import edu.bank.command.model.CommandParam;
+
+import java.util.Set;
 
 public interface BankService {
 
-    void createBank(Map<String, String> bankInfo);
+    void createBank(Set<CommandParam> bankInfo);
 
-    void getAllBanks(Map<String, String> bankInfo);
+    void getAllBanks(Set<CommandParam> bankInfo);
 
-    void getBank(Map<String, String> bankInfo);
+    void getBank(Set<CommandParam> bankInfo);
 
-    void updateBank(Map<String, String> bankInfo);
+    void updateBank(Set<CommandParam> bankInfo);
 
-    void deleteBank(Map<String, String> bankInfo);
+    void deleteBank(Set<CommandParam> bankInfo);
 
-    void addExistingUser(Map<String, String> info);
+    void addExistingUser(Set<CommandParam> info);
 }

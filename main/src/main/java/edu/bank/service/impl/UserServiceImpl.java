@@ -1,7 +1,9 @@
 package edu.bank.service.impl;
 
+import edu.bank.command.CommandParamInspector;
+import edu.bank.command.model.CommandParam;
+import edu.bank.console.ConsoleCommandResultViewer;
 import edu.bank.dao.*;
-import edu.bank.dao.impl.*;
 import edu.bank.exeption.BusinessLogicException;
 import edu.bank.model.dto.IndividualFullInfoDTO;
 import edu.bank.model.dto.LegalEntityFullInfoDTO;
@@ -10,45 +12,49 @@ import edu.bank.model.entity.Individual;
 import edu.bank.model.entity.LegalEntity;
 import edu.bank.model.entity.User;
 import edu.bank.service.AccountService;
-import edu.bank.service.CommandManager;
 import edu.bank.service.UserService;
+import lombok.RequiredArgsConstructor;
 import org.apache.log4j.Logger;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 
-import static edu.bank.model.enm.CommandParam.*;
+@Service
+@RequiredArgsConstructor
+public class UserServiceImpl implements UserService {
 
-public class UserServiceImpl implements UserService, CommandManager {
+    private final CommandParamInspector commandParamInspector;
 
-    private final UserRepository userRepository = new UserRepositoryImpl();
-    private final BankRepository bankRepository = new BankRepositoryImpl();
-    private final IndividualRepository individualRepository = new IndividualRepositoryImpl();
-    private final LegalEntityRepository legalEntityRepository = new LegalEntityRepositoryImpl();
-    private final AccountRepository accountRepository = new AccountRepositoryImpl();
-    private final TransactionRepository transactionRepository = new TransactionRepositoryImpl();
-    private final AccountService accountService = new AccountServiceImpl();
+    private final ConsoleCommandResultViewer commandResultViewer;
+    private final UserRepository userRepository;
+    private final BankRepository bankRepository;
+    private final IndividualRepository individualRepository;
+    private final LegalEntityRepository legalEntityRepository;
+    private final AccountRepository accountRepository;
+    private final TransactionRepository transactionRepository;
+    private final AccountService accountService;
     private static final Logger log = Logger.getLogger(UserServiceImpl.class);
-    private static final String BANK_ID_PARAM = BANK_ID.getParamName();
-    private static final String USER_ID_PARAM = USER_ID.getParamName();
-    private static final String LEGAL_ENTITY_NAME_PARAM = LEGAL_ENTITY_USER_NAME.getParamName();
-    private static final String INDIVIDUAL_FIRST_NAME_PARAM = INDIVIDUAL_USER_FIRST_NAME.getParamName();
-    private static final String INDIVIDUAL_LAST_NAME_PARAM = INDIVIDUAL_USER_LAST_NAME.getParamName();
-    private static final String INDIVIDUAL_PATRONYMIC_PARAM = INDIVIDUAL_USER_PATRONYMIC.getParamName();
-    private static final String PHONE_PARAM = USER_PHONE.getParamName();
+    private static final String BANK_ID_PARAM = "bId";
+    private static final String USER_ID_PARAM = "uId";
+    private static final String LEGAL_ENTITY_NAME_PARAM = "leName";
+    private static final String INDIVIDUAL_FIRST_NAME_PARAM = "fName";
+    private static final String INDIVIDUAL_LAST_NAME_PARAM = "lName";
+    private static final String INDIVIDUAL_PATRONYMIC_PARAM = "patr";
+    private static final String PHONE_PARAM = "phone";
 
     @Override
-    public void createIndividual(Map<String, String> userInfo) {
-        if (!areAllParamsPresent(new String[]{BANK_ID_PARAM, INDIVIDUAL_FIRST_NAME_PARAM, INDIVIDUAL_LAST_NAME_PARAM,
+    public void createIndividual(Set<CommandParam> userInfo) {
+        if (!commandParamInspector.areAllCommandParamsPresent(new String[]{BANK_ID_PARAM, INDIVIDUAL_FIRST_NAME_PARAM, INDIVIDUAL_LAST_NAME_PARAM,
                 INDIVIDUAL_PATRONYMIC_PARAM, PHONE_PARAM}, userInfo))
             throw new BusinessLogicException("There is not enough information to create an individual");
-        String phone = userInfo.get(PHONE_PARAM);
+        String phone = commandParamInspector.getParamValueByNameIfPresent(PHONE_PARAM, userInfo);
         checkUserExistsByPhone(phone, "create");
-        long bankId = Long.parseLong(userInfo.get(BANK_ID_PARAM));
+        long bankId = Long.parseLong(commandParamInspector.getParamValueByNameIfPresent(BANK_ID_PARAM, userInfo));
         if (bankRepository.get(bankId) == null) throw new BusinessLogicException("There is no bank with this ID");
-        String firstName = userInfo.get(INDIVIDUAL_FIRST_NAME_PARAM);
-        String lastName = userInfo.get(INDIVIDUAL_LAST_NAME_PARAM);
-        String patronymic = userInfo.get(INDIVIDUAL_PATRONYMIC_PARAM);
+        String firstName = commandParamInspector.getParamValueByNameIfPresent(INDIVIDUAL_FIRST_NAME_PARAM, userInfo);
+        String lastName = commandParamInspector.getParamValueByNameIfPresent(INDIVIDUAL_LAST_NAME_PARAM, userInfo);
+        String patronymic = commandParamInspector.getParamValueByNameIfPresent(INDIVIDUAL_PATRONYMIC_PARAM, userInfo);
         Individual individual = new Individual();
         individual.setName(firstName);
         individual.setLastName(lastName);
@@ -57,124 +63,124 @@ public class UserServiceImpl implements UserService, CommandManager {
         User createdUser = userRepository.create(bankId, individual);
         accountRepository.create(accountService.getDefaultAccountForNewUser(bankId, createdUser.getId()));
         String info = String.format("Individual %s %s %s has been successfully created", lastName, firstName, patronymic);
-        System.out.println(String.format(info));
+        commandResultViewer.showSuccessMessage(info);
         log.info(String.format(info));
     }
 
     @Override
-    public void createLegalEntity(Map<String, String> userInfo) {
-        if (!areAllParamsPresent(new String[]{BANK_ID_PARAM, LEGAL_ENTITY_NAME_PARAM, PHONE_PARAM}, userInfo))
+    public void createLegalEntity(Set<CommandParam> userInfo) {
+        if (!commandParamInspector.areAllCommandParamsPresent(new String[]{BANK_ID_PARAM, LEGAL_ENTITY_NAME_PARAM, PHONE_PARAM}, userInfo))
             throw new BusinessLogicException("There is not enough information to create a legal entity");
-        String phone = userInfo.get(PHONE_PARAM);
+        String phone = commandParamInspector.getParamValueByNameIfPresent(PHONE_PARAM, userInfo);
         checkUserExistsByPhone(phone, "create");
-        long bankId = Long.parseLong(userInfo.get(BANK_ID_PARAM));
+        long bankId = Long.parseLong(commandParamInspector.getParamValueByNameIfPresent(BANK_ID_PARAM, userInfo));
         if (bankRepository.get(bankId) == null) throw new BusinessLogicException("There is no bank with this ID");
-        String name = userInfo.get(LEGAL_ENTITY_NAME_PARAM);
+        String name = commandParamInspector.getParamValueByNameIfPresent(LEGAL_ENTITY_NAME_PARAM, userInfo);
         LegalEntity legalEntity = new LegalEntity();
         legalEntity.setName(name);
         legalEntity.setPhone(phone);
         User createdUser = userRepository.create(bankId, legalEntity);
         accountRepository.create(accountService.getDefaultAccountForNewUser(bankId, createdUser.getId()));
         String info = String.format("Legal entity %s has been successfully created", name);
-        System.out.println(String.format(info));
+        commandResultViewer.showSuccessMessage(info);
         log.info(String.format(info));
     }
 
     @Override
-    public void getAllIndividuals(Map<String, String> userInfo) {
+    public void getAllIndividuals(Set<CommandParam> userInfo) {
         List<Individual> individuals = individualRepository.getAll();
         if (individuals == null || individuals.isEmpty()) throw new BusinessLogicException("Not found");
-        System.out.println("All individuals: ");
+        commandResultViewer.showSuccessMessage("All individuals: ");
         individuals.stream().map(i -> mapFromIndividualToIndividualFullInfoDTO(i.getId())).forEach(System.out::println);
     }
 
     @Override
-    public void getAllLegalEntities(Map<String, String> userInfo) {
+    public void getAllLegalEntities(Set<CommandParam> userInfo) {
         List<LegalEntity> legalEntities = legalEntityRepository.getAll();
         if (legalEntities == null || legalEntities.isEmpty()) throw new BusinessLogicException("Not found");
-        System.out.println("All legal entities: ");
+        commandResultViewer.showSuccessMessage("All legal entities: ");
         legalEntities.stream().map(l -> mapFromLegalEntityToLegalEntityFullInfoDTO(l.getId())).forEach(System.out::println);
     }
 
     @Override
-    public void getIndividual(Map<String, String> userInfo) {
-        if (!areAllParamsPresent(new String[]{USER_ID_PARAM}, userInfo))
+    public void getIndividual(Set<CommandParam> userInfo) {
+        if (!commandParamInspector.areAllCommandParamsPresent(new String[]{USER_ID_PARAM}, userInfo))
             throw new BusinessLogicException("Individual ID not specified");
-        long id = Long.parseLong(userInfo.get(USER_ID_PARAM));
+        long id = Long.parseLong(commandParamInspector.getParamValueByNameIfPresent(USER_ID_PARAM, userInfo));
         if (!userRepository.isExists(id) || !userRepository.isIndividual(id))
             throw new BusinessLogicException("There is no individual with this ID");
-        else System.out.println(mapFromIndividualToIndividualFullInfoDTO(id));
+        else commandResultViewer.showSuccessMessage(mapFromIndividualToIndividualFullInfoDTO(id).toString());
     }
 
     @Override
-    public void getLegalEntity(Map<String, String> userInfo) {
-        if (!areAllParamsPresent(new String[]{USER_ID_PARAM}, userInfo))
+    public void getLegalEntity(Set<CommandParam> userInfo) {
+        if (!commandParamInspector.areAllCommandParamsPresent(new String[]{USER_ID_PARAM}, userInfo))
             throw new BusinessLogicException("Legal entity ID not specified");
-        long id = Long.parseLong(userInfo.get(USER_ID_PARAM));
+        long id = Long.parseLong(commandParamInspector.getParamValueByNameIfPresent(USER_ID_PARAM, userInfo));
         if (!userRepository.isExists(id) || userRepository.isIndividual(id))
             throw new BusinessLogicException("There is no legal entity with this ID");
-        else System.out.println(mapFromLegalEntityToLegalEntityFullInfoDTO(id));
+        else commandResultViewer.showSuccessMessage(mapFromLegalEntityToLegalEntityFullInfoDTO(id).toString());
     }
 
     @Override
-    public void updateIndividual(Map<String, String> userInfo) {
-        if (!areAllParamsPresent(new String[]{USER_ID_PARAM}, userInfo))
+    public void updateIndividual(Set<CommandParam> userInfo) {
+        if (!commandParamInspector.areAllCommandParamsPresent(new String[]{USER_ID_PARAM}, userInfo))
             throw new BusinessLogicException("Individual ID not specified");
-        if (!isAnyParamPresent(new String[]{INDIVIDUAL_FIRST_NAME_PARAM, INDIVIDUAL_LAST_NAME_PARAM, INDIVIDUAL_PATRONYMIC_PARAM,
+        if (!commandParamInspector.isAnyCommandParamPresent(new String[]{INDIVIDUAL_FIRST_NAME_PARAM, INDIVIDUAL_LAST_NAME_PARAM, INDIVIDUAL_PATRONYMIC_PARAM,
                 PHONE_PARAM}, userInfo)) throw new BusinessLogicException("New data is not specified");
-        long id = Long.parseLong(userInfo.get(USER_ID_PARAM));
+        long id = Long.parseLong(commandParamInspector.getParamValueByNameIfPresent(USER_ID_PARAM, userInfo));
         Individual individualToUpdate = individualRepository.get(id);
         if (individualToUpdate == null) throw new BusinessLogicException("There is no individual with this ID");
-        if (userInfo.containsKey(INDIVIDUAL_FIRST_NAME_PARAM)) {
-            String firstName = userInfo.get(INDIVIDUAL_FIRST_NAME_PARAM);
+        if (commandParamInspector.areCommandParamsContainsParam(INDIVIDUAL_FIRST_NAME_PARAM, userInfo)) {
+            String firstName = commandParamInspector.getParamValueByNameIfPresent(INDIVIDUAL_FIRST_NAME_PARAM, userInfo);
             individualToUpdate.setName(firstName);
         }
-        if (userInfo.containsKey(INDIVIDUAL_LAST_NAME_PARAM)) {
-            String lastName = userInfo.get(INDIVIDUAL_LAST_NAME_PARAM);
+        if (commandParamInspector.areCommandParamsContainsParam(INDIVIDUAL_LAST_NAME_PARAM, userInfo)) {
+            String lastName = commandParamInspector.getParamValueByNameIfPresent(INDIVIDUAL_LAST_NAME_PARAM, userInfo);
             individualToUpdate.setLastName(lastName);
         }
-        if (userInfo.containsKey(INDIVIDUAL_PATRONYMIC_PARAM)) {
-            String patronymic = userInfo.get(INDIVIDUAL_PATRONYMIC_PARAM);
+        if (commandParamInspector.areCommandParamsContainsParam(INDIVIDUAL_PATRONYMIC_PARAM, userInfo)) {
+            String patronymic = commandParamInspector.getParamValueByNameIfPresent(INDIVIDUAL_PATRONYMIC_PARAM, userInfo);
             individualToUpdate.setPatronymic(patronymic);
         }
-        if (userInfo.containsKey(PHONE_PARAM)) {
-            String phone = userInfo.get(PHONE_PARAM);
+        if (commandParamInspector.areCommandParamsContainsParam(PHONE_PARAM, userInfo)) {
+            String phone = commandParamInspector.getParamValueByNameIfPresent(PHONE_PARAM, userInfo);
             checkUserExistsByPhone(phone, "update");
             individualToUpdate.setPhone(phone);
         }
         individualRepository.update(id, individualToUpdate);
-        System.out.println(String.format("Individual with id %d has been successfully updated", id));
+        commandResultViewer.showSuccessMessage(String.format("Individual with id %d has been successfully updated", id));
         log.info(individualToUpdate + " has been successfully updated");
     }
 
     @Override
-    public void updateLegalEntity(Map<String, String> userInfo) {
-        if (!areAllParamsPresent(new String[]{USER_ID_PARAM}, userInfo))
+    public void updateLegalEntity(Set<CommandParam> userInfo) {
+        if (!commandParamInspector.areAllCommandParamsPresent(new String[]{USER_ID_PARAM}, userInfo))
             throw new BusinessLogicException("Legal entity ID not specified");
-        if (!isAnyParamPresent(new String[]{LEGAL_ENTITY_NAME_PARAM, PHONE_PARAM}, userInfo))
+        if (!commandParamInspector.isAnyCommandParamPresent(new String[]{LEGAL_ENTITY_NAME_PARAM, PHONE_PARAM}, userInfo))
             throw new BusinessLogicException("New data is not specified");
-        long id = Long.parseLong(userInfo.get(USER_ID_PARAM));
+        long id = Long.parseLong(commandParamInspector.getParamValueByNameIfPresent(USER_ID_PARAM, userInfo));
         LegalEntity legalEntityToUpdate = legalEntityRepository.get(id);
         if (legalEntityToUpdate == null) throw new BusinessLogicException("There is no legal entity with this ID");
-        if (userInfo.containsKey(LEGAL_ENTITY_NAME_PARAM)) {
-            String name = userInfo.get(LEGAL_ENTITY_NAME_PARAM);
+        if (commandParamInspector.areCommandParamsContainsParam(LEGAL_ENTITY_NAME_PARAM, userInfo)) {
+            String name = commandParamInspector.getParamValueByNameIfPresent(LEGAL_ENTITY_NAME_PARAM, userInfo);
             legalEntityToUpdate.setName(name);
         }
-        if (userInfo.containsKey(PHONE_PARAM)) {
-            String phone = userInfo.get(PHONE_PARAM);
+        if (commandParamInspector.areCommandParamsContainsParam(PHONE_PARAM, userInfo)) {
+            String phone = commandParamInspector.getParamValueByNameIfPresent(PHONE_PARAM, userInfo);
             checkUserExistsByPhone(phone, "update");
             legalEntityToUpdate.setPhone(phone);
         }
         legalEntityRepository.update(id, legalEntityToUpdate);
-        System.out.println(String.format("Legal entity with id %d has been successfully updated", id));
+        commandResultViewer.showSuccessMessage(String.format("Legal entity with id %d has been successfully updated", id));
         log.info(legalEntityToUpdate + " has been successfully updated");
     }
 
     @Override
-    public void deleteUser(Map<String, String> userInfo) {
-        if (!areAllParamsPresent(new String[]{USER_ID_PARAM}, userInfo))
+    public void deleteUser(Set<CommandParam> userInfo) {
+        if (!commandParamInspector.areAllCommandParamsPresent(new String[]{USER_ID_PARAM}, userInfo))
             throw new BusinessLogicException("User ID not specified");
-        long id = Long.parseLong(userInfo.get(USER_ID_PARAM));
+        long id = Long.parseLong(commandParamInspector.getParamValueByNameIfPresent(USER_ID_PARAM, userInfo));
         if (userRepository.get(id) == null) throw new BusinessLogicException("There is no user with this ID");
         else deleteUser(id);
     }

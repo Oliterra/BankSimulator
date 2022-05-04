@@ -3,20 +3,23 @@ package edu.bank.dao.impl;
 import edu.bank.dao.IndividualRepository;
 import edu.bank.exeption.DAOException;
 import edu.bank.model.entity.Individual;
+import lombok.RequiredArgsConstructor;
+import org.springframework.jdbc.datasource.ConnectionHolder;
+import org.springframework.stereotype.Repository;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class IndividualRepositoryImpl extends BaseRepository implements IndividualRepository {
+@Repository
+@RequiredArgsConstructor
+public class IndividualRepositoryImpl implements IndividualRepository {
+    private final ConnectionHolder connectionHolder;
 
     @Override
     public Individual create(Individual individual) {
-        try (PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO users (first_name, " +
+        try (PreparedStatement preparedStatement = connectionHolder.getConnection().prepareStatement("INSERT INTO users (first_name, " +
                 "last_name, patronymic, phone) VALUES(?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS)) {
             preparedStatement.setString(1, individual.getName());
             preparedStatement.setString(2, individual.getLastName());
@@ -34,7 +37,7 @@ public class IndividualRepositoryImpl extends BaseRepository implements Individu
     @Override
     public List<Individual> getAll() {
         List<Individual> individuals = new ArrayList<>();
-        try (PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM users")) {
+        try (PreparedStatement preparedStatement = connectionHolder.getConnection().prepareStatement("SELECT * FROM users")) {
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 Individual individual = doGetMapping(resultSet);
@@ -58,7 +61,7 @@ public class IndividualRepositoryImpl extends BaseRepository implements Individu
 
     @Override
     public void update(long id, Individual individual) {
-        try (PreparedStatement preparedStatement = connection.prepareStatement("UPDATE users SET first_name=?, " +
+        try (PreparedStatement preparedStatement = connectionHolder.getConnection().prepareStatement("UPDATE users SET first_name=?, " +
                 "last_name=?, patronymic=?, phone=? WHERE id=?")) {
             preparedStatement.setString(1, individual.getName());
             preparedStatement.setString(2, individual.getLastName());
@@ -72,7 +75,7 @@ public class IndividualRepositoryImpl extends BaseRepository implements Individu
     }
 
     private Individual getByAnyParamIfPresent(String sql, Object criteria) {
-        try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+        try (PreparedStatement preparedStatement = connectionHolder.getConnection().prepareStatement(sql)) {
             if (criteria instanceof Long) preparedStatement.setLong(1, (long) criteria);
             if (criteria instanceof String) preparedStatement.setString(1, (String) criteria);
             ResultSet resultSet = preparedStatement.executeQuery();

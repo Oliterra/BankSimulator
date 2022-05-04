@@ -3,20 +3,23 @@ package edu.bank.dao.impl;
 import edu.bank.dao.LegalEntityRepository;
 import edu.bank.exeption.DAOException;
 import edu.bank.model.entity.LegalEntity;
+import lombok.RequiredArgsConstructor;
+import org.springframework.jdbc.datasource.ConnectionHolder;
+import org.springframework.stereotype.Repository;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class LegalEntityRepositoryImpl extends BaseRepository implements LegalEntityRepository {
+@Repository
+@RequiredArgsConstructor
+public class LegalEntityRepositoryImpl implements LegalEntityRepository {
+    private final ConnectionHolder connectionHolder;
 
     @Override
     public LegalEntity create(LegalEntity legalEntity) {
-        try (PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO users (first_name," +
+        try (PreparedStatement preparedStatement = connectionHolder.getConnection().prepareStatement("INSERT INTO users (first_name," +
                 " phone) VALUES(?, ?)", Statement.RETURN_GENERATED_KEYS)) {
             preparedStatement.setString(1, legalEntity.getName());
             preparedStatement.setString(2, legalEntity.getPhone());
@@ -32,7 +35,7 @@ public class LegalEntityRepositoryImpl extends BaseRepository implements LegalEn
     @Override
     public List<LegalEntity> getAll() {
         List<LegalEntity> legalEntities = new ArrayList<>();
-        try (PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM users")) {
+        try (PreparedStatement preparedStatement = connectionHolder.getConnection().prepareStatement("SELECT * FROM users")) {
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 LegalEntity legalEntity = doGetMapping(resultSet);
@@ -56,7 +59,7 @@ public class LegalEntityRepositoryImpl extends BaseRepository implements LegalEn
 
     @Override
     public void update(long id, LegalEntity legalEntity) {
-        try (PreparedStatement preparedStatement = connection.prepareStatement("UPDATE users SET first_name=?, " +
+        try (PreparedStatement preparedStatement = connectionHolder.getConnection().prepareStatement("UPDATE users SET first_name=?, " +
                 "phone=? WHERE id=?")) {
             preparedStatement.setString(1, legalEntity.getName());
             preparedStatement.setString(2, legalEntity.getPhone());
@@ -68,7 +71,7 @@ public class LegalEntityRepositoryImpl extends BaseRepository implements LegalEn
     }
 
     private LegalEntity getByAnyParamIfPresent(String sql, Object criteria) {
-        try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+        try (PreparedStatement preparedStatement = connectionHolder.getConnection().prepareStatement(sql)) {
             if (criteria instanceof Long) preparedStatement.setLong(1, (long) criteria);
             if (criteria instanceof String) preparedStatement.setString(1, (String) criteria);
             ResultSet resultSet = preparedStatement.executeQuery();

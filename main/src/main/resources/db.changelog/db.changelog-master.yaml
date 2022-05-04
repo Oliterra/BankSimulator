@@ -1,0 +1,176 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1
+      author: nadezhda.tarasava
+      changes:
+        - createTable:
+            tableName: banks
+            columns:
+              - column:
+                  name: id
+                  type: int
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(100)
+                  constraints:
+                    unique: true
+                    nullable: false
+              - column:
+                  name: iban_prefix
+                  type: varchar(4)
+                  constraints:
+                    unique: true
+                    nullable: false
+              - column:
+                  name: individuals_fee
+                  type: double
+                  constraints:
+                    nullable: false
+              - column:
+                  name: legal_entities_fee
+                  type: double
+                  constraints:
+                    nullable: false
+  - changeSet:
+      id: 2
+      author: nadezhda.tarasava
+      changes:
+        - createTable:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  type: int
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: first_name
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: last_name
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: patronymic
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: phone
+                  type: varchar(20)
+                  constraints:
+                    unique: true
+                    nullable: false
+  - changeSet:
+      id: 3
+      author: nadezhda.tarasava
+      changes:
+        - createTable:
+            tableName: banks_users
+            columns:
+              - column:
+                  name: bank_id
+                  type: int
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_bank_id
+                    references: banks(id)
+              - column:
+                  name: user_id
+                  type: int
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_user_id
+                    references: users(id)
+  - changeSet:
+      id: 4
+      author: nadezhda.tarasava
+      changes:
+        - createTable:
+            tableName: accounts
+            columns:
+              - column:
+                  name: iban
+                  type: varchar(40)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: int
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_user_id
+                    references: users(id)
+              - column:
+                  name: currency
+                  type: varchar(10)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: balance
+                  type: float
+                  constraints:
+                    nullable: false
+              - column:
+                  name: registration_date
+                  type: date
+                  constraints:
+                    nullable: false
+  - changeSet:
+      id: 5
+      author: nadezhda.tarasava
+      changes:
+        - createTable:
+            tableName: transactions
+            columns:
+              - column:
+                  name: id
+                  type: int
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: recipient_account
+                  type: varchar(40)
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_recipient_account
+                    references: accounts(iban)
+              - column:
+                  name: sender_account
+                  type: varchar(40)
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_sender_account
+                    references: accounts(iban)
+              - column:
+                  name: full_sum
+                  type: float
+                  constraints:
+                    nullable: false
+              - column:
+                  name: fee
+                  type: float
+                  constraints:
+                    nullable: false
+              - column:
+                  name: date
+                  type: date
+                  constraints:
+                    nullable: false
+              - column:
+                  name: time
+                  type: time
+                  constraints:
+                    nullable: false
