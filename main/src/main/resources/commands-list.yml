@@ -1,42 +1,312 @@
-commands:
-  - name: "createBank"
-    description: "create a new bank"
+commandsPackageName: "edu.bank.model.command.impl"
+commandsInfo:
+  - name: help
+    description: get all commands
+    className: HelpCommand
+    executionMethod: HelpService.getAllCommands
+
+  - name: createBank
+    description: create a new bank
     params:
-      - name: "name"
-        description: "set the bank name"
-      - name: "ibanP"
-        description: "set the iban prefix of the bank"
-      - name: "indFee"
-        description: "set the iban prefix of the bank"
-      - name: "legFee"
-        description: "set a fee for bank customers (individuals)"
+      - name: bankName
+        nullable: false
+        content: letters
+        minLength: 3
+        maxLength: 100
+      - name: ibanPrefix
+        nullable: false
+        content: letters and digits
+        minLength: 4
+        maxLength: 4
+      - name: individualsFee
+        nullable: false
+        content: digits
+        minValue: 0.00001
+        maxValue: 1
+      - name: legalEntitiesFee
+        nullable: false
+        content: digits
+        minValue: 0.00001
+        maxValue: 1
+    className: CreateBankCommand
+    executionMethod: BankService.createBank
 
-  - name: "allBanks"
-    description: "get all banks"
+  - name: allBanks
+    description: get all banks
+    className: GetAllBanksCommand
+    executionMethod: BankService.getAllBanks
 
-  - name: "getBank"
-    description: "get information about a bank"
+  - name: getBank
+    description: get information about a bank
     params:
-      - name: "bId"
-        description: "set the bank id"
+      - name: id
+        nullable: false
+        content: digits
+        minValue: 1
+    className: GetBankCommand
+    executionMethod: BankService.getBank
 
-  - name: "updateBank"
-    description: "update an existing bank"
+  - name: updateBank
+    description: update an existing bank
     params:
-      - name: "bId"
-        description: "set the bank id to update"
-      - name: "name"
-        description: "set the bank name"
-      - name: "ibanP"
-        description: "set the iban prefix of the bank"
-      - name: "indFee"
-        description: "set the iban prefix of the bank"
-      - name: "legFee"
-        description: "set a fee for bank customers (individuals)"
+      - name: id
+        nullable: false
+        content: digits
+        minValue: 1
+      - name: bankName
+        nullable: true
+        content: letters
+        minLength: 3
+        maxLength: 100
+      - name: ibanPrefix
+        nullable: true
+        content: letters and digits
+        minLength: 4
+        maxLength: 4
+      - name: individualFee
+        nullable: true
+        content: digits
+        minValue: 0.00001
+        maxValue: 1
+      - name: legalEntityFee
+        nullable: true
+        content: digits
+        minValue: 0.00001
+        maxValue: 1
+    className: UpdateBankCommand
+    executionMethod: BankService.updateBank
 
-  - name: "deleteBank"
-    description: "delete a bank from the system, all accounts of its users their transaction history(the user is deleted if he belonged only to this bank)"
+  - name: deleteBank
+    description: delete a bank from the system, all accounts of its users their transaction history(the user is deleted if he belonged only to this bank)
     params:
-      - name: "bId"
-        description: "set the bank id to delete"
+      - name: id
+        nullable: false
+        content: digits
+        minValue: 1
+    className: DeleteBankCommand
+    executionMethod: BankService.deleteBank
 
+  - name: createIndividual
+    description: create a new individual
+    params:
+      - name: bankId
+        nullable: false
+        content: digits
+        minValue: 1
+      - name: firstName
+        nullable: false
+        content: letters
+        minLength: 3
+        maxLength: 50
+      - name: lastName
+        nullable: false
+        content: letters
+        minLength: 3
+        maxLength: 50
+      - name: patronymic
+        nullable: false
+        content: letters
+        minLength: 3
+        maxLength: 50
+      - name: phone
+        nullable: false
+        content: digits
+        minLength: 6
+        maxLength: 12
+    className: CreateIndividualCommand
+    executionMethod: UserService.createIndividual
+
+  - name: allIndividuals
+    description: get all banks
+    className: GetAllIndividualsCommand
+    executionMethod: UserService.getAllIndividuals
+
+  - name: getIndividual
+    description: get information about an individual
+    params:
+      - name: id
+        nullable: false
+        content: digits
+        minValue: 1
+    className: GetIndividualCommand
+    executionMethod: UserService.getIndividual
+
+  - name: updateIndividual
+    description: update an existing individual
+    params:
+      - name: id
+        nullable: false
+        content: digits
+        minValue: 1
+      - name: firstName
+        nullable: true
+        content: letters
+        minLength: 3
+        maxLength: 50
+      - name: lastName
+        nullable: true
+        content: letters
+        minLength: 3
+        maxLength: 50
+      - name: patronymic
+        nullable: true
+        content: letters
+        minLength: 3
+        maxLength: 50
+      - name: phone
+        nullable: true
+        content: digits
+        minLength: 6
+        maxLength: 12
+    className: UpdateIndividualCommand
+    executionMethod: UserService.updateIndividual
+
+  - name: createLegalEntity
+    description: create a new legal entity
+    params:
+      - name: bankId
+        nullable: false
+        content: digits
+        minValue: 1
+      - name: legalEntityName
+        nullable: false
+        content: letters
+        minLength: 3
+        maxLength: 50
+      - name: phone
+        nullable: false
+        content: digits
+        minLength: 6
+        maxLength: 12
+    className: CreateLegalEntityCommand
+    executionMethod: UserService.createLegalEntity
+
+  - name: allLegalEntities
+    description: get all legal entities
+    className: GetAllLegalEntitiesCommand
+    executionMethod: UserService.getAllLegalEntities
+
+  - name: getLegalEntity
+    description: get information about a legal entity
+    params:
+      - name: id
+        nullable: false
+        content: digits
+        minValue: 1
+    className: GetLegalEntityCommand
+    executionMethod: UserService.getLegalEntity
+
+  - name: updateLegalEntity
+    description: update an existing individual
+    params:
+      - name: id
+        nullable: false
+        content: digits
+        minValue: 1
+      - name: legalEntityName
+        nullable: true
+        content: letters
+        minLength: 3
+        maxLength: 50
+      - name: phone
+        nullable: true
+        content: digits
+        minLength: 6
+        maxLength: 12
+    className: UpdateLegalEntityCommand
+    executionMethod: UserService.updateLegalEntity
+
+  - name: deleteUser
+    description: get information about a legal entity
+    params:
+      - name: id
+        nullable: false
+        content: digits
+        minValue: 1
+    className: DeleteUserCommand
+    executionMethod: UserService.deleteUser
+
+  - name: newBank
+    description: an opportunity for an existing user to register with a new bank
+    params:
+      - name: userId
+        nullable: false
+        content: digits
+        minValue: 1
+      - name: bankId
+        nullable: false
+        content: digits
+        minValue: 1
+    className: BecomeNewBankClientCommand
+    executionMethod: BankService.addExistingUser
+
+  - name: createAccount
+    description: create a new account for a bank customer
+    params:
+      - name: bankId
+        nullable: false
+        content: digits
+        minValue: 1
+      - name: userId
+        nullable: false
+        content: digits
+        minValue: 1
+      - name: currency
+        nullable: true
+        content: letters
+        minLength: 2
+        maxLength: 5
+    className: CreateAccountCommand
+    executionMethod: AccountService.createNewAccount
+
+  - name: getUserAccounts
+    description: get a list of all user accounts and their balance
+    params:
+      - name: userId
+        nullable: false
+        content: digits
+        minValue: 1
+      - name: currency
+        nullable: true
+        content: letters
+        minLength: 2
+        maxLength: 5
+    className: GetUserAccountsCommand
+    executionMethod: AccountService.getAllByUser
+
+  - name: transfer
+    description: withdraw money from one account and put it on another
+    params:
+      - name: fromIban
+        nullable: false
+        content: letters and digits
+        minLength: 28
+        maxLength: 32
+      - name: toIban
+        nullable: false
+        content: letters and digits
+        minLength: 28
+        maxLength: 32
+      - name: sum
+        nullable: false
+        content: digits
+        minValue: 1
+    className: TransferMoneyCommand
+    executionMethod: AccountService.transferMoney
+
+  - name: history
+    description: get transaction history of a user for a certain period of time
+    params:
+        - name: accountIban
+          nullable: false
+          content: letters and digits
+          minLength: 28
+          maxLength: 32
+        - name: fromDate
+          nullable: true
+          content: date
+        - name: toDate
+          nullable: true
+          content: date
+    className: GetAccountHistoryCommand
+    executionMethod: TransactionService.getTransactionHistory
