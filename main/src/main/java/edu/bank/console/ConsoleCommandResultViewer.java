@@ -1,11 +1,10 @@
 package edu.bank.console;
 
-import edu.bank.result.CommandResult;
-import edu.bank.result.CommandResultMapper;
-import edu.bank.model.command.CommandsInfo;
 import edu.bank.model.dto.ErrorDTO;
 import edu.bank.model.enm.CommandResultStatus;
 import edu.bank.model.enm.ConsoleColor;
+import edu.bank.result.CommandResult;
+import edu.bank.result.CommandResultMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -14,12 +13,10 @@ import org.springframework.stereotype.Component;
 public class ConsoleCommandResultViewer {
 
     public void showWelcomeMessage() {
-        System.out.println("Welcome!\nTo view a list of all available commands, type \"help\"." +
-                "\nTo exit the application, use \"exit\".");
-    }
-
-    public void showAllCommands(CommandsInfo commandsInfo){
-        commandsInfo.toString();
+        System.out.println("""
+                Welcome!
+                To view a list of all available commands, type "help".
+                To exit the application, use "exit".""");
     }
 
     public boolean isTheCycleInterrupted(String consoleInput) {
@@ -32,7 +29,7 @@ public class ConsoleCommandResultViewer {
         if (result == null) printSuccessMessage();
         else if (mapper != null) mapper.showInfo(result);
         else if (result.getClass().equals(ErrorDTO.class)) printErrorMessage(((ErrorDTO) result).getMessage());
-        else result.toString();
+        else System.out.println(result);
     }
 
     private void printSuccessMessage(){

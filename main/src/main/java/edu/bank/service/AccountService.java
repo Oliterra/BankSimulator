@@ -128,7 +128,10 @@ public class AccountService {
             throw new BusinessLogicException("The function of transferring between different currencies is still under development");
         double fromAccountBalance = fromAccount.getBalance();
         if (fromAccountBalance < sum)
-            throw new BusinessLogicException(String.format("Insufficient funds.\n" + "Transfer amount: %f\nThe balance on the account: %f", sum, fromAccountBalance));
+            throw new BusinessLogicException(String.format("""
+                    Insufficient funds.
+                    Transfer amount: %f
+                    The balance on the account: %f""", sum, fromAccountBalance));
         double toAccountBalance = toAccount.getBalance();
         fromAccountBalance -= sum;
         toAccountBalance += sum;
@@ -147,7 +150,12 @@ public class AccountService {
         double sumWithFee = (sum * fee) + sum;
         double fromAccountBalance = fromAccount.getBalance();
         if (fromAccountBalance < sumWithFee)
-            throw new BusinessLogicException(String.format("Insufficient funds.\nTransfer sum: %f\nFee: %f\nTransfer sum + fee: %f\n" + "\nThe balance on the account: %f", sum, fee, sumWithFee, fromAccountBalance));
+            throw new BusinessLogicException(String.format("""
+                    Insufficient funds.
+                    Transfer sum: %f
+                    Fee: %f
+                    Transfer sum + fee: %f
+                    The balance on the account: %f""", sum, fee, sumWithFee, fromAccountBalance));
         double toAccountBalance = toAccount.getBalance();
         fromAccountBalance -= sumWithFee;
         toAccountBalance += sum;
@@ -167,9 +175,7 @@ public class AccountService {
     private String generateIban(long bankId) {
         String ibanPrefix = bankRepository.getIbanPrefixById(bankId);
         if (ibanPrefix == null) throw new BusinessLogicException("Missing IBAN");
-        StringBuilder iban = new StringBuilder();
-        iban.append(IBAN_START_STRING).append(generateRandomNumber(2)).append(ibanPrefix).append(generateRandomNumber(20));
-        return iban.toString();
+        return IBAN_START_STRING + generateRandomNumber(2) + ibanPrefix + generateRandomNumber(20);
     }
 
     private String generateRandomNumber(int length) {

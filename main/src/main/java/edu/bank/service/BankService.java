@@ -38,8 +38,7 @@ public class BankService {
         checkIfBankExistsByIbanPrefix(ibanPrefix, "create");
         Bank createdBank = bankRepository.create(bank);
         log.info(bank + " has been successfully created");
-        BankFullInfoDTO bankFullInfoDTO = modelMapper.map(createdBank, BankFullInfoDTO.class);
-        return bankFullInfoDTO;
+        return modelMapper.map(createdBank, BankFullInfoDTO.class);
     }
 
     public List<BankFullInfoDTO> getAllBanks() {
