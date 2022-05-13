@@ -1,69 +1,75 @@
 package edu.bank.command;
 
+import edu.bank.model.dto.Error;
+import edu.bank.model.dto.ErrorMessage;
+import edu.bank.model.dto.ExceptionDetails;
 import edu.bank.result.CommandResult;
-import edu.bank.exeption.BusinessLogicException;
-import edu.bank.model.dto.ErrorDTO;
-import edu.bank.model.enm.ConsoleColor;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
+@Slf4j
 @Component
-@Log4j2
 public class CommandExceptionHandler {
 
-    private Map<Class<? extends Throwable>, String> exceptionHandlingMap;
-
-    @PostConstruct
-    private void init() {
-        exceptionHandlingMap = new HashMap<>();
-        exceptionHandlingMap.put(IOException.class, "Invalid command format. To view all commands use \"help\"");
-        exceptionHandlingMap.put(NumberFormatException.class, "Invalid param format. To view all commands params info use \"help\"");
-    }
-
-    public CommandResult<ErrorDTO> handleException(Throwable cause) {
-        ErrorDTO errorDTO;
-        if (cause != null) {
-            logError(cause);
-            Class<? extends Throwable> causeClass = cause.getClass();
-            String causeMessage = cause.getMessage();
-            errorDTO = formErrorDTO(causeClass, causeMessage);
-        } else errorDTO = formStandardErrorMessage();
-        CommandResult<ErrorDTO> commandResult = new CommandResult<>();
-        commandResult.setResult(errorDTO);
+    public CommandResult<ErrorMessage> handleException(Throwable throwable) {
+        Error error = getError(throwable);
+        logError(error);
+        List<ExceptionDetails> exceptionDetails = error.getExceptionsDetails();
+        ExceptionDetails causeExceptionDetails = exceptionDetails.stream().skip(exceptionDetails.size() - 1).findFirst().get();
+        ErrorMessage errorMessage = getErrorMessage(causeExceptionDetails);
+        CommandResult<ErrorMessage> commandResult = new CommandResult<>();
+        commandResult.setResult(errorMessage);
         return commandResult;
     }
 
-    private void logError(Throwable cause) {
-        log.error(ConsoleColor.RED_BOLD + "An error occurred: class:{}, message: {}",
-                cause.getClass().getSimpleName(), cause.getMessage() + ConsoleColor.RESET);
+    private Error getError(Throwable throwable) {
+        Error error = new Error();
+        List<ExceptionDetails> exceptionsDetails = new ArrayList<>();
+        while (throwable != null) {
+            ExceptionDetails exceptionDetails = new ExceptionDetails();
+            exceptionDetails.setClassName(throwable.getClass().getSimpleName());
+            exceptionDetails.setMessage(throwable.getMessage());
+            exceptionsDetails.add(exceptionDetails);
+            throwable = throwable.getCause();
+        }
+        error.setExceptionsDetails(exceptionsDetails);
+        return error;
     }
 
-    private ErrorDTO formErrorDTO(Class<? extends Throwable> causeClass, String causeMessage) {
-        if (causeClass.equals(BusinessLogicException.class)) return handleBusinessLogicException(causeMessage);
-        else if (exceptionHandlingMap.containsKey(causeClass)) return formCustomErrorMessage(causeMessage);
-        else return formStandardErrorMessage();
+    private ErrorMessage getErrorMessage(ExceptionDetails exceptionDetails) {
+        ErrorMessage errorMessage;
+        String exceptionClassName = exceptionDetails.getClassName();
+        if (exceptionClassName.equals("BusinessLogicException") || exceptionClassName.equals("IOException") || exceptionClassName.equals("ExitRequest")) {
+            errorMessage = getCustomErrorMessage(exceptionDetails.getMessage());
+        } else {
+            errorMessage = getStandardErrorMessage();
+        }
+        return errorMessage;
     }
 
-    private ErrorDTO handleBusinessLogicException(String message) {
-        ErrorDTO errorDTO = new ErrorDTO();
-        errorDTO.setMessage(message);
-        return errorDTO;
+    private ErrorMessage getCustomErrorMessage(String message) {
+        ErrorMessage errorMessage = new ErrorMessage();
+        errorMessage.setMessage(message);
+        return errorMessage;
     }
 
-    private ErrorDTO formCustomErrorMessage(String message) {
-        ErrorDTO errorDTO = new ErrorDTO();
-        errorDTO.setMessage(message);
-        return errorDTO;
+    private ErrorMessage getStandardErrorMessage() {
+        ErrorMessage errorMessage = new ErrorMessage();
+        errorMessage.setMessage("Sorry, an internal error has occurred. Try again later");
+        return errorMessage;
     }
 
-    private ErrorDTO formStandardErrorMessage() {
-        ErrorDTO errorDTO = new ErrorDTO();
-        errorDTO.setMessage("Sorry, an internal error has occurred. Try again later");
-        return errorDTO;
+    private void logError(Error error) {
+        StringBuilder logMessage = new StringBuilder();
+        logMessage.append("An error occurred:");
+        error.getExceptionsDetails().forEach(e -> logMessage
+                .append("\nException class: ")
+                .append(e.getClassName())
+                .append("\nException message: ")
+                .append(e.getMessage()));
+        log.error(logMessage.toString());
     }
 }

@@ -3,10 +3,12 @@ package edu.bank.command;
 import edu.bank.exeption.BusinessLogicException;
 import edu.bank.exeption.InternalError;
 import edu.bank.model.command.CommandDescription;
-import edu.bank.model.command.CommandInfo;
 import edu.bank.model.command.CommandParamInfo;
+import edu.bank.model.command.CommandsInfo;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.HashSet;
@@ -14,28 +16,24 @@ import java.util.Map;
 import java.util.Set;
 
 @Component
+@RequiredArgsConstructor
 public class CommandParamsValidator {
 
+    private final CommandsInfoStorage commandsInfoStorage;
     private static final String CONTAINS_LETTERS_ONLY = "letters";
     private static final String CONTAINS_DIGITS_ONLY = "digits";
     private static final String CONTAINS_LETTERS_AND_DIGITS = "letters and digits";
     private static final String CONTAINS_DATE = "date";
 
-    public void validateCommandParams(CommandInfo commandInfo, CommandDescription commandDescription) {
-        Set<CommandParamInfo> commandParamsInfo = commandInfo.getParams();
+    public void validateCommandParams(CommandDescription commandDescription) throws IOException {
+        String commandName = commandDescription.getName();
+        Set<CommandParamInfo> commandParamsInfo = getCommandParamsInfoByName(commandName);
         Map<String, String> commandRawParams = commandDescription.getParams();
-        if (commandParamsInfo != null || !commandRawParams.isEmpty()) {
+        if (commandParamsInfo != null) {
             if (!areAllRequiredParamsPresent(commandParamsInfo, commandRawParams))
                 throw new BusinessLogicException("Not all required parameters are present");
             commandRawParams.keySet().forEach(p -> checkInputCommandParam(commandRawParams.get(p), getCommandParamInfoByName(commandParamsInfo, p)));
         }
-    }
-
-    private CommandParamInfo getCommandParamInfoByName(Set<CommandParamInfo> commandParamsInfo, String paramName) {
-        return commandParamsInfo.stream()
-                .filter(p -> p.getName().equals(paramName))
-                .findFirst()
-                .orElseThrow(() -> new BusinessLogicException("Invalid parameter name"));
     }
 
     private boolean areAllRequiredParamsPresent(Set<CommandParamInfo> commandParamsInfo, Map<String, String> commandRawParams) {
@@ -43,12 +41,6 @@ public class CommandParamsValidator {
         long requiredParamsCount = requiredParamsNames.size();
         long filteredParamsCount = commandRawParams.keySet().stream().filter(requiredParamsNames::contains).count();
         return requiredParamsCount == filteredParamsCount;
-    }
-
-    private Set<String> getAllRequiredParamsNames(Set<CommandParamInfo> commandParamsInfo) {
-        Set<String> requiredParamsNames = new HashSet<>();
-        commandParamsInfo.stream().filter(p -> !p.isNullable()).forEach(p -> requiredParamsNames.add(p.getName()));
-        return requiredParamsNames;
     }
 
     private void checkInputCommandParam(String paramValue, CommandParamInfo commandParamInfo) {
@@ -99,5 +91,27 @@ public class CommandParamsValidator {
         } catch (DateTimeParseException e) {
             throw new BusinessLogicException("Invalid date format: " + paramValue);
         }
+    }
+
+    private Set<String> getAllRequiredParamsNames(Set<CommandParamInfo> commandParamsInfo) {
+        Set<String> requiredParamsNames = new HashSet<>();
+        commandParamsInfo.stream().filter(p -> !p.isNullable()).forEach(p -> requiredParamsNames.add(p.getName()));
+        return requiredParamsNames;
+    }
+
+    private Set<CommandParamInfo> getCommandParamsInfoByName(String name) throws IOException {
+        CommandsInfo commandsInfo = commandsInfoStorage.getCommandsInfo();
+        return commandsInfo.getCommandsInfo().stream()
+                .filter(c -> c.getName().equals(name))
+                .findFirst()
+                .orElseThrow(() -> new IOException("There is no such command"))
+                .getParams();
+    }
+
+    private CommandParamInfo getCommandParamInfoByName(Set<CommandParamInfo> commandParamsInfo, String paramName) {
+        return commandParamsInfo.stream()
+                .filter(p -> p.getName().equals(paramName))
+                .findFirst()
+                .orElseThrow(() -> new BusinessLogicException("Invalid parameter name"));
     }
 }

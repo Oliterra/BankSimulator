@@ -1,39 +1,35 @@
 package edu.bank.model.command.impl;
 
-import edu.bank.result.CommandResult;
-import edu.bank.result.mapper.LegalEntityFullInfoDTOResultMapper;
-import edu.bank.model.command.*;
-import edu.bank.model.dto.LegalEntityFullInfoDTO;
-import edu.bank.model.dto.LegalEntityToCreateDTO;
+import edu.bank.model.command.BaseCommand;
+import edu.bank.model.command.CommandDescription;
+import edu.bank.model.dto.LegalEntityFullInfo;
+import edu.bank.model.dto.LegalEntityToCreate;
 import edu.bank.model.entity.LegalEntity;
+import edu.bank.result.CommandResult;
+import edu.bank.result.mapper.LegalEntityFullInfoResultMapper;
 import org.springframework.stereotype.Component;
 
-import java.lang.reflect.InvocationTargetException;
-
 @Component
-public class CreateLegalEntityCommand extends BaseCommand<LegalEntityToCreateDTO, LegalEntityFullInfoDTO> {
+public class CreateLegalEntityCommand extends BaseCommand {
 
     @Override
-    public CommandExecutionInfo<LegalEntityToCreateDTO> prepareCommand(CommandDescription commandDescription, CommandInfo commandInfo) {
+    public CommandResult<LegalEntityFullInfo> executeCommand(CommandDescription commandDescription) throws ReflectiveOperationException  {
+        LegalEntityToCreate legalEntityToCreate = getLegalEntityToCreate(commandDescription);
+        CommandResult<LegalEntityFullInfo> commandResult = super.executeAnyCommand(commandDescription, legalEntityToCreate);
+        commandResult.setCommandResultMapper(new LegalEntityFullInfoResultMapper());
+        return commandResult;
+    }
+
+    private LegalEntityToCreate getLegalEntityToCreate(CommandDescription commandDescription) {
         long bankId = Long.parseLong(getParamValueByNameOrThrowException(commandDescription, "bankId"));
         String name = getParamValueByNameOrThrowException(commandDescription, "legalEntityName");
         String phone = getParamValueByNameOrThrowException(commandDescription, "phone");
         LegalEntity legalEntity = new LegalEntity();
         legalEntity.setName(name);
         legalEntity.setPhone(phone);
-        LegalEntityToCreateDTO legalEntityToCreateDTO = new LegalEntityToCreateDTO();
-        legalEntityToCreateDTO.setBankId(bankId);
-        legalEntityToCreateDTO.setLegalEntity(legalEntity);
-        CommandExecutionInfo<LegalEntityToCreateDTO> commandExecutionInfo = new CommandExecutionInfo<>();
-        commandExecutionInfo.setMethodParamInstance(legalEntityToCreateDTO);
-        commandExecutionInfo.setCommandInfo(commandInfo);
-        return commandExecutionInfo;
-    }
-
-    @Override
-    public CommandResult<LegalEntityFullInfoDTO> executeCommand(CommandExecutionInfo<LegalEntityToCreateDTO> commandExecutionInfo) throws ClassNotFoundException, InvocationTargetException, NoSuchMethodException, IllegalAccessException {
-        CommandResult<LegalEntityFullInfoDTO> commandResult = super.executeCommand(commandExecutionInfo);
-        commandResult.setCommandResultMapper(new LegalEntityFullInfoDTOResultMapper());
-        return commandResult;
+        LegalEntityToCreate legalEntityToCreate = new LegalEntityToCreate();
+        legalEntityToCreate.setBankId(bankId);
+        legalEntityToCreate.setLegalEntity(legalEntity);
+        return legalEntityToCreate;
     }
 }

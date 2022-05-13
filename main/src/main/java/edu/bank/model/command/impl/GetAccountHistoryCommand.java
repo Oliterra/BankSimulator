@@ -1,24 +1,28 @@
 package edu.bank.model.command.impl;
 
-import edu.bank.result.CommandResult;
-import edu.bank.result.mapper.TransactionFullInfoDTOListResultMapper;
 import edu.bank.model.command.BaseCommand;
 import edu.bank.model.command.CommandDescription;
-import edu.bank.model.command.CommandExecutionInfo;
-import edu.bank.model.command.CommandInfo;
-import edu.bank.model.dto.TransactionFullInfoDTO;
-import edu.bank.model.dto.TransactionHistoryInfoDTO;
+import edu.bank.model.dto.TransactionFullInfo;
+import edu.bank.model.dto.TransactionHistoryInfo;
+import edu.bank.result.CommandResult;
+import edu.bank.result.mapper.TransactionFullInfoListResultMapper;
 import org.springframework.stereotype.Component;
 
-import java.lang.reflect.InvocationTargetException;
 import java.time.LocalDate;
 import java.util.List;
 
 @Component
-public class GetAccountHistoryCommand extends BaseCommand<TransactionHistoryInfoDTO, List<TransactionFullInfoDTO>> {
+public class GetAccountHistoryCommand extends BaseCommand {
 
     @Override
-    public CommandExecutionInfo<TransactionHistoryInfoDTO> prepareCommand(CommandDescription commandDescription, CommandInfo commandInfo) {
+    public CommandResult<List<TransactionFullInfo>> executeCommand(CommandDescription commandDescription) throws ReflectiveOperationException  {
+        TransactionHistoryInfo transactionHistoryInfo = getTransactionHistoryInfo(commandDescription);
+        CommandResult<List<TransactionFullInfo>> commandResult = super.executeAnyCommand(commandDescription, transactionHistoryInfo);
+        commandResult.setCommandResultMapper(new TransactionFullInfoListResultMapper());
+        return commandResult;
+    }
+
+    private TransactionHistoryInfo getTransactionHistoryInfo(CommandDescription commandDescription) {
         String accountIban = getParamValueByNameOrReturnNull(commandDescription, "accountIban");
         String fromDateString = getParamValueByNameOrReturnNull(commandDescription, "fromDate");
         LocalDate fromDate = null;
@@ -26,20 +30,10 @@ public class GetAccountHistoryCommand extends BaseCommand<TransactionHistoryInfo
         String toDateString = getParamValueByNameOrReturnNull(commandDescription, "toDate");
         LocalDate toDate = null;
         if (toDateString != null) toDate = LocalDate.parse(toDateString);
-        CommandExecutionInfo<TransactionHistoryInfoDTO> commandExecutionInfo = new CommandExecutionInfo<>();
-        TransactionHistoryInfoDTO transactionHistoryInfoDTO = new TransactionHistoryInfoDTO();
-        transactionHistoryInfoDTO.setAccountIban(accountIban);
-        transactionHistoryInfoDTO.setFromDate(fromDate);
-        transactionHistoryInfoDTO.setToDate(toDate);
-        commandExecutionInfo.setMethodParamInstance(transactionHistoryInfoDTO);
-        commandExecutionInfo.setCommandInfo(commandInfo);
-        return commandExecutionInfo;
-    }
-
-    @Override
-    public CommandResult<List<TransactionFullInfoDTO>> executeCommand(CommandExecutionInfo<TransactionHistoryInfoDTO> commandExecutionInfo) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        CommandResult<List<TransactionFullInfoDTO>> commandResult = super.executeCommand(commandExecutionInfo);
-        commandResult.setCommandResultMapper(new TransactionFullInfoDTOListResultMapper());
-        return commandResult;
+        TransactionHistoryInfo transactionHistoryInfo = new TransactionHistoryInfo();
+        transactionHistoryInfo.setAccountIban(accountIban);
+        transactionHistoryInfo.setFromDate(fromDate);
+        transactionHistoryInfo.setToDate(toDate);
+        return transactionHistoryInfo;
     }
 }

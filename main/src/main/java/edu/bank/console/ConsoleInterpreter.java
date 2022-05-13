@@ -2,11 +2,11 @@ package edu.bank.console;
 
 import edu.bank.command.CommandExceptionHandler;
 import edu.bank.command.CommandExecutor;
+import edu.bank.exeption.ExitRequest;
 import edu.bank.model.command.CommandDescription;
-import edu.bank.model.dto.ErrorDTO;
+import edu.bank.model.dto.ErrorMessage;
 import edu.bank.result.CommandResult;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Component;
 
 import java.io.BufferedReader;
@@ -14,7 +14,6 @@ import java.io.InputStreamReader;
 
 @Component
 @RequiredArgsConstructor
-@Log4j2
 public class ConsoleInterpreter {
 
     private final ConsoleLineParser consoleLineParser;
@@ -23,17 +22,25 @@ public class ConsoleInterpreter {
     private final CommandExceptionHandler commandExceptionHandler;
     private static final BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 
-    public <T> void interpretConsoleInput() {
-        commandResultViewer.showWelcomeMessage();
-        while (true) {
+    public void interpretConsoleInput() {
+        for (int i = 0; ; i++) {
             try {
-                String consoleInput = reader.readLine();
-                if (commandResultViewer.isTheCycleInterrupted(consoleInput)) break;
-                CommandDescription commandDescription = consoleLineParser.getCommandDescriptorFromConsoleInput(consoleInput);
-                CommandResult<T> commandResult = commandExecutor.executeCommand(commandDescription);
+                CommandDescription commandDescription;
+                if (i == 0) {
+                    commandDescription = new CommandDescription();
+                    commandDescription.setName("welcome");
+                } else {
+                    String consoleInput = reader.readLine();
+                    commandDescription = consoleLineParser.getCommandDescriptorFromConsoleInput(consoleInput);
+                }
+                CommandResult<?> commandResult = commandExecutor.executeCommand(commandDescription);
                 commandResultViewer.showResult(commandResult);
+            } catch (ExitRequest e) {
+                CommandResult<ErrorMessage> commandResult = commandExceptionHandler.handleException(e);
+                commandResultViewer.showResult(commandResult);
+                break;
             } catch (Exception e) {
-                CommandResult<ErrorDTO> commandResult = commandExceptionHandler.handleException(e.getCause());
+                CommandResult<ErrorMessage> commandResult = commandExceptionHandler.handleException(e);
                 commandResultViewer.showResult(commandResult);
             }
         }

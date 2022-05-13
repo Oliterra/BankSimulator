@@ -1,20 +1,26 @@
 package edu.bank.model.command.impl;
 
-import edu.bank.result.CommandResult;
-import edu.bank.result.mapper.IndividualFullInfoDTOResultMapper;
-import edu.bank.model.command.*;
-import edu.bank.model.dto.IndividualFullInfoDTO;
-import edu.bank.model.dto.IndividualToCreateDTO;
+import edu.bank.model.command.BaseCommand;
+import edu.bank.model.command.CommandDescription;
+import edu.bank.model.dto.IndividualFullInfo;
+import edu.bank.model.dto.IndividualToCreate;
 import edu.bank.model.entity.Individual;
+import edu.bank.result.CommandResult;
+import edu.bank.result.mapper.IndividualFullInfoResultMapper;
 import org.springframework.stereotype.Component;
 
-import java.lang.reflect.InvocationTargetException;
-
 @Component
-public class CreateIndividualCommand extends BaseCommand<IndividualToCreateDTO, IndividualFullInfoDTO> {
+public class CreateIndividualCommand extends BaseCommand {
 
     @Override
-    public CommandExecutionInfo<IndividualToCreateDTO> prepareCommand(CommandDescription commandDescription, CommandInfo commandInfo) {
+    public CommandResult<IndividualFullInfo> executeCommand(CommandDescription commandDescription) throws ReflectiveOperationException  {
+        IndividualToCreate individualToCreate = getIndividualToCreateDTO(commandDescription);
+        CommandResult<IndividualFullInfo> commandResult = super.executeAnyCommand(commandDescription, individualToCreate);
+        commandResult.setCommandResultMapper(new IndividualFullInfoResultMapper());
+        return commandResult;
+    }
+
+    private IndividualToCreate getIndividualToCreateDTO(CommandDescription commandDescription) {
         long bankId = Long.parseLong(getParamValueByNameOrThrowException(commandDescription, "bankId"));
         String firstName = getParamValueByNameOrThrowException(commandDescription, "firstName");
         String lastName = getParamValueByNameOrThrowException(commandDescription, "lastName");
@@ -25,19 +31,9 @@ public class CreateIndividualCommand extends BaseCommand<IndividualToCreateDTO, 
         individual.setLastName(lastName);
         individual.setPatronymic(patronymic);
         individual.setPhone(phone);
-        IndividualToCreateDTO individualToCreateDTO = new IndividualToCreateDTO();
-        individualToCreateDTO.setBankId(bankId);
-        individualToCreateDTO.setIndividual(individual);
-        CommandExecutionInfo<IndividualToCreateDTO> commandExecutionInfo = new CommandExecutionInfo<>();
-        commandExecutionInfo.setMethodParamInstance(individualToCreateDTO);
-        commandExecutionInfo.setCommandInfo(commandInfo);
-        return commandExecutionInfo;
-    }
-
-    @Override
-    public CommandResult<IndividualFullInfoDTO> executeCommand(CommandExecutionInfo<IndividualToCreateDTO> commandExecutionInfo) throws ClassNotFoundException, InvocationTargetException, NoSuchMethodException, IllegalAccessException {
-        CommandResult<IndividualFullInfoDTO> commandResult = super.executeCommand(commandExecutionInfo);
-        commandResult.setCommandResultMapper(new IndividualFullInfoDTOResultMapper());
-        return commandResult;
+        IndividualToCreate individualToCreate = new IndividualToCreate();
+        individualToCreate.setBankId(bankId);
+        individualToCreate.setIndividual(individual);
+        return individualToCreate;
     }
 }

@@ -1,28 +1,21 @@
 package edu.bank.model.command.impl;
 
-import edu.bank.result.mapper.BankFullInfoDTOListResultMapper;
+import edu.bank.model.command.BaseCommand;
+import edu.bank.model.command.CommandDescription;
+import edu.bank.model.dto.BankFullInfo;
 import edu.bank.result.CommandResult;
-import edu.bank.model.command.*;
-import edu.bank.model.dto.BankFullInfoDTO;
+import edu.bank.result.mapper.BankFullInfoListResultMapper;
 import org.springframework.stereotype.Component;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
 @Component
-public class GetAllBanksCommand extends BaseCommand<Void, List<BankFullInfoDTO>> {
+public class GetAllBanksCommand extends BaseCommand {
 
     @Override
-    public CommandExecutionInfo<Void> prepareCommand(CommandDescription commandDescription, CommandInfo commandInfo) {
-        CommandExecutionInfo<Void> commandExecutionInfo = new CommandExecutionInfo<>();
-        commandExecutionInfo.setCommandInfo(commandInfo);
-        return commandExecutionInfo;
-    }
-
-    @Override
-    public CommandResult<List<BankFullInfoDTO>> executeCommand(CommandExecutionInfo<Void> commandExecutionInfo) throws ClassNotFoundException, InvocationTargetException, NoSuchMethodException, IllegalAccessException {
-        CommandResult<List<BankFullInfoDTO>> commandResult = super.executeCommand(commandExecutionInfo);
-        commandResult.setCommandResultMapper(new BankFullInfoDTOListResultMapper());
+    public CommandResult<List<BankFullInfo>> executeCommand(CommandDescription commandDescription) throws ReflectiveOperationException  {
+        CommandResult<List<BankFullInfo>> commandResult = super.executeAnyCommand(commandDescription);
+        commandResult.setCommandResultMapper(new BankFullInfoListResultMapper());
         return commandResult;
     }
 }
