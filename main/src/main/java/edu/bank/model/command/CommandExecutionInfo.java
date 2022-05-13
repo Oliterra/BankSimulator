@@ -3,8 +3,8 @@ package edu.bank.model.command;
 import lombok.Data;
 
 @Data
-public class CommandExecutionInfo<T> {
+public class CommandExecutionInfo {
 
-    T methodParamInstance;
-    CommandInfo commandInfo;
+    private Object serviceInstance;
+    private String executionMethodName;
 }

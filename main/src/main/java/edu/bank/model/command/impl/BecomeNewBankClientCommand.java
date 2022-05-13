@@ -1,37 +1,30 @@
 package edu.bank.model.command.impl;
 
-import edu.bank.result.mapper.AccountMainInfoDTOResultMapper;
-import edu.bank.result.CommandResult;
 import edu.bank.model.command.BaseCommand;
 import edu.bank.model.command.CommandDescription;
-import edu.bank.model.command.CommandExecutionInfo;
-import edu.bank.model.command.CommandInfo;
-import edu.bank.model.dto.AccountMainInfoDTO;
-import edu.bank.model.dto.CreateBankClientDTO;
+import edu.bank.model.dto.AccountMainInfo;
+import edu.bank.model.dto.CreateBankClient;
+import edu.bank.result.CommandResult;
+import edu.bank.result.mapper.AccountMainInfoResultMapper;
 import org.springframework.stereotype.Component;
 
-import java.lang.reflect.InvocationTargetException;
-
 @Component
-public class BecomeNewBankClientCommand extends BaseCommand<CreateBankClientDTO, AccountMainInfoDTO> {
+public class BecomeNewBankClientCommand extends BaseCommand {
 
     @Override
-    public CommandExecutionInfo<CreateBankClientDTO> prepareCommand(CommandDescription commandDescription, CommandInfo commandInfo) {
-        long userId = Long.parseLong(getParamValueByNameOrThrowException(commandDescription, "userId"));
-        long bankId = Long.parseLong(getParamValueByNameOrThrowException(commandDescription, "bankId"));
-        CommandExecutionInfo<CreateBankClientDTO> commandExecutionInfo = new CommandExecutionInfo<>();
-        CreateBankClientDTO createBankClientDTO = new CreateBankClientDTO();
-        createBankClientDTO.setUserId(userId);
-        createBankClientDTO.setBankId(bankId);
-        commandExecutionInfo.setMethodParamInstance(createBankClientDTO);
-        commandExecutionInfo.setCommandInfo(commandInfo);
-        return commandExecutionInfo;
+    public CommandResult<AccountMainInfo> executeCommand(CommandDescription commandDescription) throws ReflectiveOperationException {
+        CreateBankClient createBankClient = getCreateBankClientDTO(commandDescription);
+        CommandResult<AccountMainInfo> commandResult = super.executeAnyCommand(commandDescription, createBankClient);
+        commandResult.setCommandResultMapper(new AccountMainInfoResultMapper());
+        return commandResult;
     }
 
-    @Override
-    public CommandResult<AccountMainInfoDTO> executeCommand(CommandExecutionInfo<CreateBankClientDTO> commandExecutionInfo) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        CommandResult<AccountMainInfoDTO> commandResult = super.executeCommand(commandExecutionInfo);
-        commandResult.setCommandResultMapper(new AccountMainInfoDTOResultMapper());
-        return commandResult;
+    private CreateBankClient getCreateBankClientDTO(CommandDescription commandDescription) {
+        long userId = Long.parseLong(getParamValueByNameOrThrowException(commandDescription, "userId"));
+        long bankId = Long.parseLong(getParamValueByNameOrThrowException(commandDescription, "bankId"));
+        CreateBankClient createBankClient = new CreateBankClient();
+        createBankClient.setUserId(userId);
+        createBankClient.setBankId(bankId);
+        return createBankClient;
     }
 }

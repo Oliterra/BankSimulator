@@ -11,3 +11,12 @@ spring:
   liquibase:
     change-log: classpath:db.changelog/db.changelog-master.yaml
     enabled: true
+  logging:
+    level:
+      edu.bank: INFO
+    pattern:
+      console: "%msg%n"
+
+
+
+

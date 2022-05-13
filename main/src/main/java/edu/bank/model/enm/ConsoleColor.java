@@ -5,10 +5,7 @@ public enum ConsoleColor {
     RED_BOLD("\033[1;31m"),
     GREEN_BOLD("\033[1;32m"),
     YELLOW_BOLD("\033[1;33m"),
-    BLUE_BOLD("\033[1;34m"),
-    MAGENTA_BOLD("\033[1;35m"),
-    CYAN_BOLD("\033[1;36m"),
-    WHITE_BOLD("\033[1;37m");
+    MAGENTA_BOLD("\033[1;35m");
 
     private final String code;
 
@@ -20,4 +17,4 @@ public enum ConsoleColor {
     public String toString() {
         return code;
     }
-}
+    }

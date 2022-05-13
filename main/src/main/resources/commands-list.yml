@@ -1,14 +1,23 @@
 commandsPackageName: "edu.bank.model.command.impl"
 commandsInfo:
+  - name: welcome
+    description: show welcome message
+    className: WelcomeCommand
+    executionMethod: CommandService.getWelcomeMessage
+
+  - name: exit
+    description: show goodbye message
+    className: ExitCommand
+
   - name: help
     description: get all commands
     className: HelpCommand
-    executionMethod: HelpService.getAllCommands
+    executionMethod: CommandService.getAllCommands
 
   - name: createBank
     description: create a new bank
     params:
-      - name: bankName
+      - name: name
         nullable: false
         content: letters
         minLength: 3
@@ -53,7 +62,7 @@ commandsInfo:
         nullable: false
         content: digits
         minValue: 1
-      - name: bankName
+      - name: name
         nullable: true
         content: letters
         minLength: 3
@@ -297,16 +306,16 @@ commandsInfo:
   - name: history
     description: get transaction history of a user for a certain period of time
     params:
-        - name: accountIban
-          nullable: false
-          content: letters and digits
-          minLength: 28
-          maxLength: 32
-        - name: fromDate
-          nullable: true
-          content: date
-        - name: toDate
-          nullable: true
-          content: date
+      - name: accountIban
+        nullable: false
+        content: letters and digits
+        minLength: 28
+        maxLength: 32
+      - name: fromDate
+        nullable: true
+        content: date
+      - name: toDate
+        nullable: true
+        content: date
     className: GetAccountHistoryCommand
     executionMethod: TransactionService.getTransactionHistory

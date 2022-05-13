@@ -7,6 +7,6 @@ import java.util.Map;
 @Data
 public class CommandDescription {
 
-    protected String name;
+    private String name;
     private Map<String, String> params;
 }

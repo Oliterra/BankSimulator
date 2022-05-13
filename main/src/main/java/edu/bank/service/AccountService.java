@@ -11,7 +11,7 @@ import edu.bank.model.entity.Account;
 import edu.bank.model.entity.Bank;
 import edu.bank.model.entity.Transaction;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
@@ -19,9 +19,9 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
-@Log4j2
 public class AccountService {
 
     private final AccountRepository accountRepository;
@@ -32,10 +32,10 @@ public class AccountService {
     private final ModelMapper modelMapper;
     private static final String IBAN_START_STRING = "BY";
 
-    public AccountMainInfoDTO createNewAccount(CreateAccountDTO createAccountDTO) {
-        long bankId = createAccountDTO.getBankId();
+    public AccountMainInfo createNewAccount(CreateAccount createAccount) {
+        long bankId = createAccount.getBankId();
         if (!bankRepository.isExists(bankId)) throw new BusinessLogicException("There is no bank with this ID");
-        long userId = createAccountDTO.getUserId();
+        long userId = createAccount.getUserId();
         if (!userRepository.isExists(userId)) throw new BusinessLogicException("There is no user with this ID");
         if (!userRepository.isBankClient(bankId, userId))
             throw new BusinessLogicException("The user is not a client of the bank");
@@ -43,33 +43,33 @@ public class AccountService {
         account.setBalance(0);
         account.setUser(userRepository.get(userId));
         Currency currency = Currency.USD;
-        String currencyString = createAccountDTO.getCurrency();
+        String currencyString = createAccount.getCurrency();
         if (currencyString != null) currency = Currency.valueOf(currencyString);
         account.setCurrency(currency);
         account.setRegistrationDate(LocalDate.now());
         String newIban = generateIban(bankId);
         account.setIban(newIban);
         Account createdAccount = accountRepository.create(account);
-        AccountMainInfoDTO createdAccountMainInfoDTO = modelMapper.map(createdAccount, AccountMainInfoDTO.class);
-        createdAccountMainInfoDTO.setBankName(determineBankByIban(createdAccount.getIban()).getName());
+        AccountMainInfo createdAccountMainInfo = modelMapper.map(createdAccount, AccountMainInfo.class);
+        createdAccountMainInfo.setBankName(determineBankByIban(createdAccount.getIban()).getName());
         log.info(account + " has been successfully created");
-        return createdAccountMainInfoDTO;
+        return createdAccountMainInfo;
     }
 
-    public List<AccountMainInfoDTO> getAllByUser(UserAndAccountMainInfoDTO userAndAccountMainInfoDTO) {
-        long userId = userAndAccountMainInfoDTO.getUserId();
+    public List<AccountMainInfo> getAllByUser(UserAndAccountMainInfo userAndAccountMainInfo) {
+        long userId = userAndAccountMainInfo.getUserId();
         List<Account> accounts;
-        String currencyString = userAndAccountMainInfoDTO.getCurrency();
+        String currencyString = userAndAccountMainInfo.getCurrency();
         if (currencyString != null) {
-            Currency currency = Currency.valueOf(userAndAccountMainInfoDTO.getCurrency());
+            Currency currency = Currency.valueOf(userAndAccountMainInfo.getCurrency());
             accounts = accountRepository.getAllByUserIdAndCurrency(userId, currency);
         } else accounts = accountRepository.getAllByUserId(userId);
-        List<AccountMainInfoDTO> accountsInfo = new ArrayList<>();
-        accounts.forEach(a -> accountsInfo.add(new AccountMainInfoDTO(a.getIban(), a.getCurrency(), a.getBalance(), determineBankByIban(a.getIban()).getName())));
+        List<AccountMainInfo> accountsInfo = new ArrayList<>();
+        accounts.forEach(a -> accountsInfo.add(new AccountMainInfo(a.getIban(), a.getCurrency(), a.getBalance(), determineBankByIban(a.getIban()).getName())));
         return accountsInfo;
     }
 
-    public List<AccountMainInfoDTO> getAllByUser(long id) {
+    public List<AccountMainInfo> getAllByUser(long id) {
         if (!userRepository.isExists(id)) throw new BusinessLogicException("There is no user with this ID");
         List<Account> accounts = accountRepository.getAllByUserId(id);
         if (accounts == null || accounts.isEmpty()) throw new BusinessLogicException("The user has no accounts");
@@ -108,19 +108,19 @@ public class AccountService {
         return bankRepository.getByIbanPrefix(ibanPrefix);
     }
 
-    public TransactionFullInfoDTO transferMoney(TransferMoneyInfoDTO transferMoneyInfoDTO) {
-        String fromAccountIban = transferMoneyInfoDTO.getFromIban();
-        String toAccountIban = transferMoneyInfoDTO.getToIban();
+    public TransactionFullInfo transferMoney(TransferMoneyInfo transferMoneyInfo) {
+        String fromAccountIban = transferMoneyInfo.getFromIban();
+        String toAccountIban = transferMoneyInfo.getToIban();
         if (!accountRepository.isExists(fromAccountIban) || !accountRepository.isExists(toAccountIban))
             throw new BusinessLogicException("Invalid IBAN");
-        double sum = transferMoneyInfoDTO.getSum();
+        double sum = transferMoneyInfo.getSum();
         Bank fromBank = determineBankByIban(fromAccountIban);
         Bank toBank = determineBankByIban(toAccountIban);
         if (fromBank.equals(toBank)) return makeIntrabankTransfer(fromAccountIban, toAccountIban, sum);
         else return makeBetweenBanksTransfer(fromBank, fromAccountIban, toAccountIban, sum);
     }
 
-    private TransactionFullInfoDTO makeIntrabankTransfer(String fromAccountIban, String toAccountIban, double sum) {
+    private TransactionFullInfo makeIntrabankTransfer(String fromAccountIban, String toAccountIban, double sum) {
         Account fromAccount = accountRepository.get(fromAccountIban);
         Account toAccount = accountRepository.get(toAccountIban);
         if (fromAccount == null || toAccount == null) throw new BusinessLogicException("Invalid IBAN");
@@ -137,12 +137,12 @@ public class AccountService {
         toAccountBalance += sum;
         accountRepository.transferMoney(fromAccountIban, toAccountIban, fromAccountBalance, toAccountBalance);
         Transaction transaction = transactionService.createTransaction(fromAccount, toAccount, sum, 0);
-        TransactionFullInfoDTO transactionFullInfoDTO = transactionService.getReceipt(transaction);
-        log.info("A new transaction has been made: " + transactionFullInfoDTO);
-        return transactionFullInfoDTO;
+        TransactionFullInfo transactionFullInfo = transactionService.getReceipt(transaction);
+        log.info("A new transaction has been made: " + transactionFullInfo);
+        return transactionFullInfo;
     }
 
-    private TransactionFullInfoDTO makeBetweenBanksTransfer(Bank bank, String fromAccountIban, String toAccountIban, double sum) {
+    private TransactionFullInfo makeBetweenBanksTransfer(Bank bank, String fromAccountIban, String toAccountIban, double sum) {
         Account fromAccount = accountRepository.get(fromAccountIban);
         Account toAccount = accountRepository.get(toAccountIban);
         if (fromAccount == null || toAccount == null) throw new BusinessLogicException("Invalid IBAN");
@@ -161,14 +161,14 @@ public class AccountService {
         toAccountBalance += sum;
         accountRepository.transferMoney(fromAccountIban, toAccountIban, fromAccountBalance, toAccountBalance);
         Transaction transaction = transactionService.createTransaction(fromAccount, toAccount, sum, fee);
-        TransactionFullInfoDTO transactionFullInfoDTO = transactionService.getReceipt(transaction);
-        log.info("A new transaction has been made: " + transactionFullInfoDTO);
-        return transactionFullInfoDTO;
+        TransactionFullInfo transactionFullInfo = transactionService.getReceipt(transaction);
+        log.info("A new transaction has been made: " + transactionFullInfo);
+        return transactionFullInfo;
     }
 
-    private List<AccountMainInfoDTO> mapFromAccountsToAccountMainInfoDTO(List<Account> accounts) {
-        List<AccountMainInfoDTO> accountsInfo = new ArrayList<>();
-        accounts.forEach(a -> accountsInfo.add(new AccountMainInfoDTO(a.getIban(), a.getCurrency(), a.getBalance(), determineBankByIban(a.getIban()).getName())));
+    private List<AccountMainInfo> mapFromAccountsToAccountMainInfoDTO(List<Account> accounts) {
+        List<AccountMainInfo> accountsInfo = new ArrayList<>();
+        accounts.forEach(a -> accountsInfo.add(new AccountMainInfo(a.getIban(), a.getCurrency(), a.getBalance(), determineBankByIban(a.getIban()).getName())));
         return accountsInfo;
     }
 

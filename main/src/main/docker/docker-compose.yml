@@ -1,0 +1,25 @@
+version: '3.1'
+
+services:
+  app:
+    image: 'bank-simulator:latest'
+    container_name: bank-simulator-app
+    build: ./
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5433/bank_simulator_db
+      - SPRING_DATASOURCE_USERNAME=nadezhda
+      - SPRING_DATASOURCE_PASSWORD=nadezhda
+
+  db:
+    image: postgres
+    container_name: bank-simulator-db-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=nadezhda
+      - POSTGRES_PASSWORD=nadezhda
+      - POSTGRES_DB=bank_simulator_db

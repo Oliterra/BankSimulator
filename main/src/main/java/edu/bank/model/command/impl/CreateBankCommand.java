@@ -1,20 +1,26 @@
 package edu.bank.model.command.impl;
 
-import edu.bank.result.mapper.BankFullInfoDTOResultMapper;
-import edu.bank.result.CommandResult;
-import edu.bank.model.command.*;
-import edu.bank.model.dto.BankFullInfoDTO;
+import edu.bank.model.command.BaseCommand;
+import edu.bank.model.command.CommandDescription;
+import edu.bank.model.dto.BankFullInfo;
 import edu.bank.model.entity.Bank;
+import edu.bank.result.CommandResult;
+import edu.bank.result.mapper.BankFullInfoResultMapper;
 import org.springframework.stereotype.Component;
 
-import java.lang.reflect.InvocationTargetException;
-
 @Component
-public class CreateBankCommand extends BaseCommand<Bank, BankFullInfoDTO>{
+public class CreateBankCommand extends BaseCommand {
 
     @Override
-    public CommandExecutionInfo<Bank> prepareCommand(CommandDescription commandDescription, CommandInfo commandInfo) {
-        String bankName = getParamValueByNameOrThrowException(commandDescription, "bankName");
+    public CommandResult<BankFullInfo> executeCommand(CommandDescription commandDescription) throws ReflectiveOperationException {
+        Bank bank = getBank(commandDescription);
+        CommandResult<BankFullInfo> commandResult = super.executeAnyCommand(commandDescription, bank);
+        commandResult.setCommandResultMapper(new BankFullInfoResultMapper());
+        return commandResult;
+    }
+
+    private Bank getBank(CommandDescription commandDescription) {
+        String bankName = getParamValueByNameOrThrowException(commandDescription, "name");
         String ibanPrefix = getParamValueByNameOrThrowException(commandDescription, "ibanPrefix");
         double individualFee = Double.parseDouble(getParamValueByNameOrThrowException(commandDescription, "individualsFee"));
         double legalEntityFee = Double.parseDouble(getParamValueByNameOrThrowException(commandDescription, "legalEntitiesFee"));
@@ -23,16 +29,6 @@ public class CreateBankCommand extends BaseCommand<Bank, BankFullInfoDTO>{
         bankToCreate.setIbanPrefix(ibanPrefix);
         bankToCreate.setIndividualsFee(individualFee);
         bankToCreate.setLegalEntitiesFee(legalEntityFee);
-        CommandExecutionInfo<Bank> commandExecutionInfo = new CommandExecutionInfo<>();
-        commandExecutionInfo.setMethodParamInstance(bankToCreate);
-        commandExecutionInfo.setCommandInfo(commandInfo);
-        return commandExecutionInfo;
-    }
-
-    @Override
-    public CommandResult<BankFullInfoDTO> executeCommand(CommandExecutionInfo<Bank> commandExecutionInfo) throws ClassNotFoundException, InvocationTargetException, NoSuchMethodException, IllegalAccessException {
-        CommandResult<BankFullInfoDTO> commandResult = super.executeCommand(commandExecutionInfo);
-        commandResult.setCommandResultMapper(new BankFullInfoDTOResultMapper());
-        return commandResult;
+        return bankToCreate;
     }
 }

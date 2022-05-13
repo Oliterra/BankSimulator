@@ -1,43 +1,43 @@
 package edu.bank.model.command.impl;
 
-import edu.bank.result.CommandResult;
-import edu.bank.model.command.*;
-import edu.bank.model.dto.BankToUpdateDTO;
+import edu.bank.model.command.BaseCommand;
+import edu.bank.model.command.CommandDescription;
+import edu.bank.model.dto.BankToUpdate;
 import edu.bank.model.entity.Bank;
+import edu.bank.result.CommandResult;
 import org.springframework.stereotype.Component;
 
-import java.lang.reflect.InvocationTargetException;
-
 @Component
-public class UpdateBankCommand extends BaseCommand<BankToUpdateDTO, Void> {
+public class UpdateBankCommand extends BaseCommand {
 
     @Override
-    public CommandExecutionInfo<BankToUpdateDTO> prepareCommand(CommandDescription commandDescription, CommandInfo commandInfo) {
+    public CommandResult<String> executeCommand(CommandDescription commandDescription) throws ReflectiveOperationException {
+        BankToUpdate bankToUpdate = getBankToUpdate(commandDescription);
+        return super.executeAnyCommand(commandDescription, bankToUpdate);
+    }
+
+    private BankToUpdate getBankToUpdate(CommandDescription commandDescription) {
         long id = Long.parseLong(getParamValueByNameOrThrowException(commandDescription, "id"));
-        String bankName = getParamValueByNameOrReturnNull(commandDescription, "bankName");
+        String bankName = getParamValueByNameOrReturnNull(commandDescription, "name");
         String ibanPrefix = getParamValueByNameOrReturnNull(commandDescription, "ibanPrefix");
         String individualFeeString = getParamValueByNameOrReturnNull(commandDescription, "individualFee");
         double individualFee = 0;
-        if(individualFeeString != null) individualFee = Double.parseDouble(individualFeeString);
+        if (individualFeeString != null) {
+            individualFee = Double.parseDouble(individualFeeString);
+        }
         String legalEntityFeeString = getParamValueByNameOrReturnNull(commandDescription, "legalEntityFee");
         double legalEntityFee = 0;
-        if(legalEntityFeeString != null) legalEntityFee = Double.parseDouble(legalEntityFeeString);
+        if (legalEntityFeeString != null) {
+            legalEntityFee = Double.parseDouble(legalEntityFeeString);
+        }
         Bank bankToUpdate = new Bank();
         bankToUpdate.setName(bankName);
         bankToUpdate.setIbanPrefix(ibanPrefix);
         bankToUpdate.setIndividualsFee(individualFee);
         bankToUpdate.setLegalEntitiesFee(legalEntityFee);
-        BankToUpdateDTO bankToUpdateDTO = new BankToUpdateDTO();
+        BankToUpdate bankToUpdateDTO = new BankToUpdate();
         bankToUpdateDTO.setId(id);
         bankToUpdateDTO.setBank(bankToUpdate);
-        CommandExecutionInfo<BankToUpdateDTO> commandExecutionInfo = new CommandExecutionInfo<>();
-        commandExecutionInfo.setMethodParamInstance(bankToUpdateDTO);
-        commandExecutionInfo.setCommandInfo(commandInfo);
-        return commandExecutionInfo;
-    }
-
-    @Override
-    public CommandResult<Void> executeCommand(CommandExecutionInfo<BankToUpdateDTO> commandExecutionInfo) throws ClassNotFoundException, InvocationTargetException, NoSuchMethodException, IllegalAccessException {
-        return super.executeCommand(commandExecutionInfo);
+        return bankToUpdateDTO;
     }
 }

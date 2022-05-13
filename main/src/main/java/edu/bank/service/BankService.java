@@ -5,23 +5,23 @@ import edu.bank.dao.BankRepository;
 import edu.bank.dao.UserRepository;
 import edu.bank.exeption.BusinessLogicException;
 import edu.bank.exeption.InternalError;
-import edu.bank.model.dto.AccountMainInfoDTO;
-import edu.bank.model.dto.BankFullInfoDTO;
-import edu.bank.model.dto.BankToUpdateDTO;
-import edu.bank.model.dto.CreateBankClientDTO;
+import edu.bank.model.dto.AccountMainInfo;
+import edu.bank.model.dto.BankFullInfo;
+import edu.bank.model.dto.BankToUpdate;
+import edu.bank.model.dto.CreateBankClient;
 import edu.bank.model.entity.Account;
 import edu.bank.model.entity.Bank;
 import edu.bank.model.entity.User;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
-@Log4j2
 public class BankService {
 
     private final BankRepository bankRepository;
@@ -31,29 +31,29 @@ public class BankService {
     private final AccountService accountService;
     private final ModelMapper modelMapper;
 
-    public BankFullInfoDTO createBank(Bank bank) {
+    public BankFullInfo createBank(Bank bank) {
         String name = bank.getName();
         String ibanPrefix = bank.getIbanPrefix();
         checkIfBankExistsByName(name, "create");
         checkIfBankExistsByIbanPrefix(ibanPrefix, "create");
         Bank createdBank = bankRepository.create(bank);
         log.info(bank + " has been successfully created");
-        return modelMapper.map(createdBank, BankFullInfoDTO.class);
+        return modelMapper.map(createdBank, BankFullInfo.class);
     }
 
-    public List<BankFullInfoDTO> getAllBanks() {
+    public List<BankFullInfo> getAllBanks() {
         List<Bank> banks = bankRepository.getAll();
         if (banks == null || banks.isEmpty()) throw new InternalError("Not found");
         return banks.stream().map(this::mapFromBankToBankFullInfoDTO).toList();
     }
 
-    public BankFullInfoDTO getBank(Long id) {
+    public BankFullInfo getBank(Long id) {
         if (!bankRepository.isExists(id)) throw new BusinessLogicException("There is no bank with this ID");
         Bank bank = bankRepository.get(id);
         return mapFromBankToBankFullInfoDTO(bank);
     }
 
-    public void updateBank(BankToUpdateDTO bank) {
+    public String updateBank(BankToUpdate bank) {
         long id = bank.getId();
         if (!bankRepository.isExists(id)) throw new BusinessLogicException("There is no bank with this ID");
         Bank bankToUpdate = bankRepository.get(id);
@@ -77,9 +77,10 @@ public class BankService {
         }
         bankRepository.update(id, bankToUpdate);
         log.info(bankToUpdate + " has been successfully updated");
+        return String.format("Bank with id %d is successfully updated: %s", id, bankToUpdate);
     }
 
-    public void deleteBank(Long id) {
+    public String deleteBank(Long id) {
         if (!bankRepository.isExists(id)) throw new BusinessLogicException("There is no bank with this ID");
         Bank bankToDelete = bankRepository.get(id);
         List<User> bankUsers = userRepository.getAllByTheBank(id);
@@ -87,19 +88,20 @@ public class BankService {
         bankUsers.forEach(u -> accountService.deleteAllUserAccountsOfSpecificBank(u.getId(), id));
         bankRepository.delete(id);
         log.info(bankToDelete + " has been successfully deleted from the system");
+        return String.format("Bank with id %d is successfully deleted", id);
     }
 
-    public AccountMainInfoDTO addExistingUser(CreateBankClientDTO createBankClientDTO) {
-        long bankId = createBankClientDTO.getBankId();
+    public AccountMainInfo addExistingUser(CreateBankClient createBankClient) {
+        long bankId = createBankClient.getBankId();
         if (!bankRepository.isExists(bankId)) throw new BusinessLogicException("There is no bank with this ID");
-        long userId = createBankClientDTO.getUserId();
+        long userId = createBankClient.getUserId();
         if (!userRepository.isExists(userId)) throw new BusinessLogicException("There is no user with this ID");
         userRepository.createBankUser(bankId, userId);
         Account newAccount = accountRepository.create(accountService.getDefaultAccountForNewUser(bankId, userId));
-        AccountMainInfoDTO newAccountMainInfoDTO = modelMapper.map(newAccount, AccountMainInfoDTO.class);
-        newAccountMainInfoDTO.setBankName(accountService.determineBankByIban(newAccount.getIban()).getName());
+        AccountMainInfo newAccountMainInfo = modelMapper.map(newAccount, AccountMainInfo.class);
+        newAccountMainInfo.setBankName(accountService.determineBankByIban(newAccount.getIban()).getName());
         log.info(String.format("Now the user(id = %d) is a customer of the bank(id = %d)", userId, bankId));
-        return newAccountMainInfoDTO;
+        return newAccountMainInfo;
     }
 
     private void checkIfBankExistsByName(String name, String operation) {
@@ -116,10 +118,10 @@ public class BankService {
         }
     }
 
-    private BankFullInfoDTO mapFromBankToBankFullInfoDTO(Bank bank) {
-        BankFullInfoDTO bankFullInfoDTO = modelMapper.map(bank, BankFullInfoDTO.class);
-        bankFullInfoDTO.setUsersCount(bankRepository.getUsersCount(bank.getId()));
-        return bankFullInfoDTO;
+    private BankFullInfo mapFromBankToBankFullInfoDTO(Bank bank) {
+        BankFullInfo bankFullInfo = modelMapper.map(bank, BankFullInfo.class);
+        bankFullInfo.setUsersCount(bankRepository.getUsersCount(bank.getId()));
+        return bankFullInfo;
     }
 }
 
