@@ -1,4 +1,4 @@
-FROM adoptopenjdk:latest
+FROM openjdk
 VOLUME /tmp
 EXPOSE 8080
 ARG JAR_FILE=*.jar
