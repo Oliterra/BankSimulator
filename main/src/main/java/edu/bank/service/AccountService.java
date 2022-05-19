@@ -32,7 +32,7 @@ public class AccountService {
     private final ModelMapper modelMapper;
     private static final String IBAN_START_STRING = "BY";
 
-    public AccountMainInfo createNewAccount(CreateAccount createAccount) {
+    public AccountMainInfo createNewAccount(CreateAccount createAccount) throws BusinessLogicException {
         long bankId = createAccount.getBankId();
         if (!bankRepository.isExists(bankId)) throw new BusinessLogicException("There is no bank with this ID");
         long userId = createAccount.getUserId();
@@ -69,14 +69,14 @@ public class AccountService {
         return accountsInfo;
     }
 
-    public List<AccountMainInfo> getAllByUser(long id) {
+    public List<AccountMainInfo> getAllByUser(long id) throws BusinessLogicException {
         if (!userRepository.isExists(id)) throw new BusinessLogicException("There is no user with this ID");
         List<Account> accounts = accountRepository.getAllByUserId(id);
         if (accounts == null || accounts.isEmpty()) throw new BusinessLogicException("The user has no accounts");
         return mapFromAccountsToAccountMainInfoDTO(accounts);
     }
 
-    public Account getDefaultAccountForNewUser(long bankId, long userId) {
+    public Account getDefaultAccountForNewUser(long bankId, long userId) throws BusinessLogicException {
         Account defaultAccount = new Account();
         defaultAccount.setBalance(0);
         defaultAccount.setUser(userRepository.get(userId));
@@ -87,19 +87,25 @@ public class AccountService {
         return defaultAccount;
     }
 
-    public void deleteAccount(String iban) {
+    public void deleteAccount(String iban) throws BusinessLogicException {
         if (!accountRepository.isExists(iban)) throw new BusinessLogicException("There is no account with this iban");
         transactionRepository.deleteBySenderAccountIban(iban);
         transactionRepository.deleteByRecipientAccountIban(iban);
         accountRepository.delete(iban);
     }
 
-    public void deleteAllUserAccountsOfSpecificBank(long userId, long bankId) {
+    public void deleteAllUserAccountsOfSpecificBank(long userId, long bankId) throws BusinessLogicException {
         if (!bankRepository.isExists(bankId)) throw new BusinessLogicException("There is no bank with this id");
         if (!userRepository.isExists(bankId)) throw new BusinessLogicException("There is no user with this id");
         List<Account> userAccounts = accountRepository.getAllByUserId(userId);
         String bankIbanPrefix = bankRepository.getIbanPrefixById(bankId);
-        userAccounts.stream().filter(a -> a.getIban().substring(4, 8).equals(bankIbanPrefix)).forEach(a -> deleteAccount(a.getIban()));
+        for (Account account : userAccounts) {
+            if (account.getIban().substring(4, 8).equals(bankIbanPrefix)) {
+                deleteAccount(account.getIban());
+            } else {
+                throw new InternalError("Unknown bank IBAN prefix in account IBAN: " + account);
+            }
+        }
         log.info(String.format("All user(id = %d) accounts of the bank(id =%d) have been deleted", userId, bankId));
     }
 
@@ -108,7 +114,7 @@ public class AccountService {
         return bankRepository.getByIbanPrefix(ibanPrefix);
     }
 
-    public TransactionFullInfo transferMoney(TransferMoneyInfo transferMoneyInfo) {
+    public TransactionFullInfo transferMoney(TransferMoneyInfo transferMoneyInfo) throws BusinessLogicException {
         String fromAccountIban = transferMoneyInfo.getFromIban();
         String toAccountIban = transferMoneyInfo.getToIban();
         if (!accountRepository.isExists(fromAccountIban) || !accountRepository.isExists(toAccountIban))
@@ -120,7 +126,7 @@ public class AccountService {
         else return makeBetweenBanksTransfer(fromBank, fromAccountIban, toAccountIban, sum);
     }
 
-    private TransactionFullInfo makeIntrabankTransfer(String fromAccountIban, String toAccountIban, double sum) {
+    private TransactionFullInfo makeIntrabankTransfer(String fromAccountIban, String toAccountIban, double sum) throws BusinessLogicException {
         Account fromAccount = accountRepository.get(fromAccountIban);
         Account toAccount = accountRepository.get(toAccountIban);
         if (fromAccount == null || toAccount == null) throw new BusinessLogicException("Invalid IBAN");
@@ -142,7 +148,7 @@ public class AccountService {
         return transactionFullInfo;
     }
 
-    private TransactionFullInfo makeBetweenBanksTransfer(Bank bank, String fromAccountIban, String toAccountIban, double sum) {
+    private TransactionFullInfo makeBetweenBanksTransfer(Bank bank, String fromAccountIban, String toAccountIban, double sum) throws BusinessLogicException {
         Account fromAccount = accountRepository.get(fromAccountIban);
         Account toAccount = accountRepository.get(toAccountIban);
         if (fromAccount == null || toAccount == null) throw new BusinessLogicException("Invalid IBAN");
@@ -172,7 +178,7 @@ public class AccountService {
         return accountsInfo;
     }
 
-    private String generateIban(long bankId) {
+    private String generateIban(long bankId) throws BusinessLogicException {
         String ibanPrefix = bankRepository.getIbanPrefixById(bankId);
         if (ibanPrefix == null) throw new BusinessLogicException("Missing IBAN");
         return IBAN_START_STRING + generateRandomNumber(2) + ibanPrefix + generateRandomNumber(20);

@@ -1,10 +1,8 @@
 package edu.bank.console;
 
-import edu.bank.command.CommandExceptionHandler;
-import edu.bank.command.CommandExecutor;
-import edu.bank.exeption.ExitRequest;
-import edu.bank.model.command.CommandDescription;
-import edu.bank.model.dto.ErrorMessage;
+import edu.bank.command.lifecycle.CommandExceptionHandler;
+import edu.bank.command.lifecycle.CommandExecutor;
+import edu.bank.command.info.CommandDescription;
 import edu.bank.result.CommandResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -18,30 +16,30 @@ public class ConsoleInterpreter {
 
     private final ConsoleLineParser consoleLineParser;
     private final CommandExecutor commandExecutor;
-    private final ConsoleCommandResultViewer commandResultViewer;
+    private final ConsoleResultViewer commandResultViewer;
     private final CommandExceptionHandler commandExceptionHandler;
     private static final BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 
     public void interpretConsoleInput() {
-        for (int i = 0; ; i++) {
+        for (boolean isFirstIteration = true; ; ) {
+            CommandDescription commandDescription;
+            CommandResult<?> commandResult;
             try {
-                CommandDescription commandDescription;
-                if (i == 0) {
+                if (isFirstIteration) {
                     commandDescription = new CommandDescription();
                     commandDescription.setName("welcome");
+                    isFirstIteration = false;
                 } else {
                     String consoleInput = reader.readLine();
-                    commandDescription = consoleLineParser.getCommandDescriptorFromConsoleInput(consoleInput);
+                    commandDescription = consoleLineParser.parseConsoleInput(consoleInput);
                 }
-                CommandResult<?> commandResult = commandExecutor.executeCommand(commandDescription);
-                commandResultViewer.showResult(commandResult);
-            } catch (ExitRequest e) {
-                CommandResult<ErrorMessage> commandResult = commandExceptionHandler.handleException(e);
-                commandResultViewer.showResult(commandResult);
-                break;
+                commandResult = commandExecutor.executeCommand(commandDescription);
             } catch (Exception e) {
-                CommandResult<ErrorMessage> commandResult = commandExceptionHandler.handleException(e);
-                commandResultViewer.showResult(commandResult);
+                commandResult = commandExceptionHandler.handleException(e);
+            }
+            commandResultViewer.showResult(commandResult);
+            if (commandResult.isCycleInterrupted()) {
+                break;
             }
         }
     }

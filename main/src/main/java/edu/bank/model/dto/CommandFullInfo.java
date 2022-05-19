@@ -1,6 +1,6 @@
 package edu.bank.model.dto;
 
-import edu.bank.model.command.CommandParamInfo;
+import edu.bank.command.info.CommandParamInfo;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

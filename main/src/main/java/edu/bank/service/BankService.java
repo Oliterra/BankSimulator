@@ -31,7 +31,7 @@ public class BankService {
     private final AccountService accountService;
     private final ModelMapper modelMapper;
 
-    public BankFullInfo createBank(Bank bank) {
+    public BankFullInfo createBank(Bank bank) throws BusinessLogicException {
         String name = bank.getName();
         String ibanPrefix = bank.getIbanPrefix();
         checkIfBankExistsByName(name, "create");
@@ -47,13 +47,13 @@ public class BankService {
         return banks.stream().map(this::mapFromBankToBankFullInfoDTO).toList();
     }
 
-    public BankFullInfo getBank(Long id) {
+    public BankFullInfo getBank(Long id) throws BusinessLogicException {
         if (!bankRepository.isExists(id)) throw new BusinessLogicException("There is no bank with this ID");
         Bank bank = bankRepository.get(id);
         return mapFromBankToBankFullInfoDTO(bank);
     }
 
-    public String updateBank(BankToUpdate bank) {
+    public String updateBank(BankToUpdate bank) throws BusinessLogicException {
         long id = bank.getId();
         if (!bankRepository.isExists(id)) throw new BusinessLogicException("There is no bank with this ID");
         Bank bankToUpdate = bankRepository.get(id);
@@ -80,18 +80,23 @@ public class BankService {
         return String.format("Bank with id %d is successfully updated: %s", id, bankToUpdate);
     }
 
-    public String deleteBank(Long id) {
+    public String deleteBank(Long id) throws BusinessLogicException {
         if (!bankRepository.isExists(id)) throw new BusinessLogicException("There is no bank with this ID");
         Bank bankToDelete = bankRepository.get(id);
         List<User> bankUsers = userRepository.getAllByTheBank(id);
-        bankUsers.stream().filter(u -> userRepository.getBanksCount(u.getId()) == 1).forEach(u -> userService.deleteUser(u.getId()));
-        bankUsers.forEach(u -> accountService.deleteAllUserAccountsOfSpecificBank(u.getId(), id));
+        for (User user : bankUsers) {
+            if (userRepository.getBanksCount(user.getId()) == 1) {
+                userService.deleteUser(user.getId());
+            } else {
+                accountService.deleteAllUserAccountsOfSpecificBank(user.getId(), id);
+            }
+        }
         bankRepository.delete(id);
         log.info(bankToDelete + " has been successfully deleted from the system");
         return String.format("Bank with id %d is successfully deleted", id);
     }
 
-    public AccountMainInfo addExistingUser(CreateBankClient createBankClient) {
+    public AccountMainInfo addExistingUser(CreateBankClient createBankClient) throws BusinessLogicException {
         long bankId = createBankClient.getBankId();
         if (!bankRepository.isExists(bankId)) throw new BusinessLogicException("There is no bank with this ID");
         long userId = createBankClient.getUserId();
@@ -104,14 +109,14 @@ public class BankService {
         return newAccountMainInfo;
     }
 
-    private void checkIfBankExistsByName(String name, String operation) {
+    private void checkIfBankExistsByName(String name, String operation) throws BusinessLogicException {
         if (bankRepository.getByName(name) != null) {
             log.info(String.format("Failed to %s a bank named %s because it already exists", operation, name));
             throw new BusinessLogicException("A bank with that name already exists");
         }
     }
 
-    private void checkIfBankExistsByIbanPrefix(String ibanPrefix, String operation) {
+    private void checkIfBankExistsByIbanPrefix(String ibanPrefix, String operation) throws BusinessLogicException {
         if (bankRepository.getByIbanPrefix(ibanPrefix) != null) {
             log.info(String.format("Failed to %s a bank with iban prefix %s because it already exists", operation, ibanPrefix));
             throw new BusinessLogicException("A bank with that iban prefix already exists");

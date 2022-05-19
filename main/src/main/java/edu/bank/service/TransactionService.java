@@ -37,7 +37,7 @@ public class TransactionService {
         return transactionRepository.create(transaction);
     }
 
-    public List<TransactionFullInfo> getTransactionHistory(TransactionHistoryInfo transactionHistoryInfo) {
+    public List<TransactionFullInfo> getTransactionHistory(TransactionHistoryInfo transactionHistoryInfo) throws BusinessLogicException {
         String accountIban = transactionHistoryInfo.getAccountIban();
         if (!accountRepository.isExists(accountIban)) throw new BusinessLogicException("Invalid IBAN");
         Account account = accountRepository.get(accountIban);

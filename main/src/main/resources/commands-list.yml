@@ -1,4 +1,5 @@
-commandsPackageName: "edu.bank.model.command.impl"
+commandsPackageName: "edu.bank.command.impl"
+commandExecutionServicesPackageName: "edu.bank.service"
 commandsInfo:
   - name: welcome
     description: show welcome message
@@ -8,6 +9,7 @@ commandsInfo:
   - name: exit
     description: show goodbye message
     className: ExitCommand
+    executionMethod: CommandService.getGoodbyeMessage
 
   - name: help
     description: get all commands
