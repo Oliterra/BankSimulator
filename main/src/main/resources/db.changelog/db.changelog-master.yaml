@@ -57,13 +57,9 @@ databaseChangeLog:
               - column:
                   name: last_name
                   type: varchar(50)
-                  constraints:
-                    nullable: false
               - column:
                   name: patronymic
                   type: varchar(50)
-                  constraints:
-                    nullable: false
               - column:
                   name: phone
                   type: varchar(20)

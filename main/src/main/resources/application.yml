@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5433/bank_simulator_db
+    url: jdbc:postgresql://localhost:5432/bank_simulator_db
     username: nadezhda
     password: nadezhda
     driver-class-name: org.postgresql.Driver
@@ -11,3 +11,8 @@ spring:
   liquibase:
     change-log: classpath:db.changelog/db.changelog-master.yaml
     enabled: true
+
+
+
+
+

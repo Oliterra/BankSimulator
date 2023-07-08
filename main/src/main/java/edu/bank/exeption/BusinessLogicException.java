@@ -1,6 +1,6 @@
 package edu.bank.exeption;
 
-public class BusinessLogicException extends RuntimeException{
+public class BusinessLogicException extends Exception {
 
     public BusinessLogicException(String message) {
         super(message);
